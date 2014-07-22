@@ -1,0 +1,59 @@
+
+//Disco Parameter File//
+Restart			0	//Restart from input.h5
+
+//Time Range//
+T_Start			0.0
+T_End			0.1
+T_Times_2pi		0
+
+//Output Frequency//
+Num_Reports		1e5
+Num_Snapshots		0
+Num_Checkpoints		0
+Use_Logtime		0
+
+//Grid Dimensions//
+Num_R			50
+Num_Z			50
+aspect			1.0	//Cell Aspect Ratio, for calculating N_phi
+Max_Aspect_Short	3.0	
+Max_Aspect_Long		3.0	//Aspect Ratio AMR Refinement Criteria
+
+//Domain Parameters//
+R_Min			0.0
+R_Max			0.5
+Z_Min			-0.5
+Z_Max			0.5
+Z_Periodic		1
+Phi_Max			1.0 
+P_Times_2pi		1
+Log_Zoning		0	//0=Uniform, 1=Log, 2=Hybrid
+Log_Radius		0.75	//Only for option 2 of Log_Zoning
+
+//Numerical Parameters
+CFL			0.2
+PLM			1.5
+Riemann_Solver		1	//0=HLL, 1=HLLC
+Mesh_Motion		3	//0=Fixed, 1=By Cell, 2=Riemann Solver
+Absorbing_BC		0
+Initial_Regrid		0
+Density_Floor		0.0
+Pressure_Floor		1e-8
+
+//Hydro Parameters
+Adiabatic_Index		1.666666667 //1.0001
+Use_Viscosity		0
+Viscosity		2.5e-5
+Use_As_Alpha		0
+
+//Planet Parameters	
+Mass_Ratio		1e-3
+Eccentricity		0.0
+Drift_Rate		0.0 //-2.5e-4
+Drift_Exp		0.66666667
+
+//Disk Parameters
+Mach_Number		20.0
+Include_Atmos		1
+
