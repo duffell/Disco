@@ -39,6 +39,7 @@ struct param_list{
 
    double Adiabatic_Index;
    double viscosity;
+   int isothermal_flag;
 
    double Disk_Mach;
    double Mass_Ratio;

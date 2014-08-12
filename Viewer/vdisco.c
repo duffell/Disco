@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR -1.0//-1.0//(-HUGE_VAL)  //.96
-#define VAL_CEIL  1.0//1.0//(HUGE_VAL)  //1.04
+#define VAL_FLOOR -1.0e-2//(-HUGE_VAL)  //.96
+#define VAL_CEIL  1.0e-2//(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -34,10 +34,10 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
-int t_off = 1;
-int p_off = 1;
+int t_off = 0;
+int p_off = 0;
 int cmap = 4;
-int draw_1d = 1;
+int draw_1d = 0;
 int draw_bar = 0;
 int draw_t   = 1;
 int draw_spiral = 0;
@@ -45,10 +45,10 @@ int draw_jet = 0;
 int draw_planet = 0;
 int draw_scale = 1;
 int reflect  = 0;
-int valq=1;
+int valq=0;
 int draw_border = 0;
 int logscale = 1;
-int floors=1;
+int floors=0;
 int help_screen=0;
 int print_vals=0;
 
@@ -301,7 +301,6 @@ void DrawGLScene(){
       }    
       glEnd();
    }else{
-
       int Num_Draws = 1+reflect+draw_border;
       int count;
       int i,j;
@@ -379,7 +378,6 @@ void DrawGLScene(){
             glEnd();
          }
       }
-
    }
 
 

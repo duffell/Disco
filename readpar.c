@@ -83,6 +83,7 @@ int read_par_file( struct domain * theDomain ){
          err += readvar( pfile , "CFL"             , VAR_DOUB , &(theList->CFL)             );
          err += readvar( pfile , "PLM"             , VAR_DOUB , &(theList->PLM)             );
          err += readvar( pfile , "Adiabatic_Index" , VAR_DOUB , &(theList->Adiabatic_Index) );
+         err += readvar( pfile , "Isothermal"      , VAR_INT  , &(theList->isothermal_flag) );
          err += readvar( pfile , "Density_Floor"   , VAR_DOUB , &(theList->Density_Floor)   );
          err += readvar( pfile , "Pressure_Floor"  , VAR_DOUB , &(theList->Pressure_Floor)  );
          err += readvar( pfile , "Mesh_Motion"     , VAR_INT  , &(theList->Mesh_Motion)     );

@@ -3,15 +3,18 @@
 
 double get_om( double );
 double get_om1( double );
+double get_cs2( double );
 
 static double gamma_law = 0.0; 
 static double RHO_FLOOR = 0.0; 
 static double PRE_FLOOR = 0.0; 
 static double explicit_viscosity = 0.0;
 static int include_viscosity = 0;
+static int isothermal = 0;
 
 void setHydroParams( struct domain * theDomain ){
    gamma_law = theDomain->theParList.Adiabatic_Index;
+   isothermal = theDomain->theParList.isothermal_flag;
    RHO_FLOOR = theDomain->theParList.Density_Floor;
    PRE_FLOOR = theDomain->theParList.Pressure_Floor;
    explicit_viscosity = theDomain->theParList.viscosity;
@@ -134,6 +137,10 @@ void cons2prim( double * cons , double * prim , double r , double dV ){
    double Pp = (gamma_law - 1.)*rhoe;
 
    if( Pp  < PRE_FLOOR*rho ) Pp = PRE_FLOOR*rho;
+   if( isothermal ){
+      double cs2 = get_cs2( r );
+      Pp = cs2*rho/gamma_law;
+   }
 
    prim[RHO] = rho;
    prim[PPP] = Pp;

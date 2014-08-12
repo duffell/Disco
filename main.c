@@ -10,6 +10,12 @@ void exchangeData( struct domain * , int );
 double getmindt( struct domain * );
 
 void read_par_file( struct domain * );
+ 
+void setICparams( struct domain * );
+void setHydroParams( struct domain * );
+void setGeometryParams( struct domain * );
+void setRiemannParams( struct domain * );
+void setDiskParams( struct domain * );
 
 void setupDomain( struct domain * );
 void freeDomain( struct domain * );
@@ -33,12 +39,13 @@ int main( int argc , char * argv[] ){
 
    setupGrid( &theDomain );   
    setupDomain( &theDomain );
-/*
+
    setICparams( &theDomain );
    setHydroParams( &theDomain );
    setGeometryParams( &theDomain );
    setRiemannParams( &theDomain );
-*/
+   setDiskParams( &theDomain );
+
    setupCells( &theDomain );
 /*
    if( theDomain.theParList.Initial_Regrid && !(theDomain.theParList.restart_flag) ) regrid( &theDomain );

@@ -1,10 +1,10 @@
 
-INITIAL  = isentropic
+INITIAL  = kepler
 HYDRO    = euler
-BOUNDARY = polar
-OUTPUT   = ascii
+BOUNDARY = fixed
+OUTPUT   = h5out
 RESTART  = no_restart
-PLANETS  = none
+PLANETS  = circular
 
 UNAME = $(shell uname)
 ifeq ($(UNAME),Linux)

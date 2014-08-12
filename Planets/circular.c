@@ -1,8 +1,13 @@
 
 #include "../paul.h"
 
-int numPlanets( void ){
-   return(2);
+static double q_planet = 1.0;
+
+void setPlanetParams( struct domain * theDomain ){
+
+   theDomain->Npl = 2; 
+   q_planet = theDomain->theParList.Mass_Ratio;
+
 }
 
 int planet_motion_analytic( void ){
@@ -18,7 +23,7 @@ void initializePlanets( struct planet * thePlanets ){
    thePlanets[0].phi   = 0.0; 
    thePlanets[0].eps   = 0.0;
 
-   thePlanets[1].M     = 1e-3; 
+   thePlanets[1].M     = q_planet; 
    thePlanets[1].vr    = 0.0; 
    thePlanets[1].omega = 1.0; 
    thePlanets[1].r     = 1.0; 

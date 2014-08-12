@@ -1,7 +1,13 @@
 
 #include "../paul.h"
 
-int numPlanets( void ){
+void setPlanetParams( struct domain * theDomain ){
+
+   theDomain->Npl = 1; 
+
+}
+
+int planet_motion_analytic( void ){
    return(1);
 }
 
