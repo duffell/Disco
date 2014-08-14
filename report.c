@@ -43,9 +43,13 @@ void report( struct domain * theDomain ){
    double Power  = 0.0;
    double Torque = 0.0;
    double Vol = 0.0;
+   double rho_min = HUGE_VAL;
+   double rhoavg_min = HUGE_VAL;
    for( j=jmin ; j<jmax ; ++j ){
       double r = .5*(r_jph[j]+r_jph[j-1]);
       double rho0 = 1. + 1./sqrt(r);
+      double rho_avg = 0.0;
+      double Vol_avg = 0.0;
       for( k=kmin ; k<kmax ; ++k ){
          int jk = j+Nr*k;
          for( i=0 ; i<Np[jk] ; ++i ){
@@ -65,6 +69,10 @@ void report( struct domain * theDomain ){
             L1_P    += fabs(Pp/pow(rho,5./3.)/0.01-1.)*dV;
             Vol += dV;
 
+            if( rho_min > rho ) rho_min = rho;
+            rho_avg += rho*dV;
+            Vol_avg += dV;
+
             if( Npl > 1 ){
                double fr,fp;
                double rp = thePlanets[1].r;
@@ -77,6 +85,8 @@ void report( struct domain * theDomain ){
             }
          }
       }
+      rho_avg /= Vol_avg;
+      if( rhoavg_min > rho_avg ) rhoavg_min = rho_avg;
    }
 
    MPI_Allreduce( MPI_IN_PLACE , &L1_isen , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
@@ -85,6 +95,8 @@ void report( struct domain * theDomain ){
    MPI_Allreduce( MPI_IN_PLACE , &Vol     , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &Torque  , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &Power   , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &rho_min    , 1 , MPI_DOUBLE , MPI_MIN , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &rhoavg_min , 1 , MPI_DOUBLE , MPI_MIN , grid_comm );
 
    L1_isen /= Vol;
    L1_rho  /= Vol;
@@ -92,7 +104,7 @@ void report( struct domain * theDomain ){
 
    if( rank==0 ){
       FILE * rFile = fopen("report.dat","a");
-      fprintf(rFile,"%e %e %e %e\n",t,Torque,Power,r_p);
+      fprintf(rFile,"%e %e %e %e %e %e\n",t,Torque,Power,r_p,rho_min,rhoavg_min);
       fclose(rFile);
    }
 

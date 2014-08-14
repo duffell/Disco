@@ -692,7 +692,7 @@ int main(int argc, char **argv)
 
    //printf("Rmin = %.2e Rmax = %.2e\n",r_min,r_max);
    //double thalf = .5*t_jph[Nt-1];
-   rescale = 1.7*r_jph[Nr-1]/1.5;///2.5;  //(r_max-r_min);
+   rescale = 2.0*r_jph[Nr-1]/1.5;///2.5;  //(r_max-r_min);
    //offx = .5*(r_min+r_max)/rescale;
    //offy = 0.5;//.5*(r_min+r_max)*sin(thalf)/rescale;
    //offy = .5*(r_min+r_max)/rescale;

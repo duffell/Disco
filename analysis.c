@@ -2,13 +2,23 @@
 #include "paul.h"
 
 int num_diagnostics(void){
-   return(2);
+   return(3);
 }
 
-void get_diagnostics( double * x , double * prim , double * Q ){
+void planetaryForce( struct planet * , double , double , double * , double * , int );
+
+void get_diagnostics( double * x , double * prim , double * Q , struct domain * theDomain ){
    double r = x[0];
+   double phi = x[1];
    Q[0] = prim[RHO];
    Q[1] = 2.*M_PI*r*prim[RHO]*prim[URR];
+   double Fr,Fp;
+   Fp = 0.0;
+   if( theDomain->Npl > 1 ){
+      struct planet * pl = theDomain->thePlanets+1;
+      planetaryForce( pl , r , phi , &Fr , &Fp , 0 );
+   }
+   Q[2] = 2.*M_PI*r*prim[RHO]*(r*Fp);
 }
 
 void zero_diagnostics( struct domain * theDomain ){
@@ -79,7 +89,7 @@ void add_diagnostics( struct domain * theDomain , double dt ){
             for( q=0 ; q<3 ; ++q ) xc[q] = .5*(xp[q]+xm[q]);
             double dV = get_dV(xp,xm);
             double Q[Nq];
-            get_diagnostics( xc , c->prim , Q );
+            get_diagnostics( xc , c->prim , Q , theDomain );
             for( q=0 ; q<Nq ; ++q ) temp_sum[ j*Nq + q ] += Q[q]*dV;
             dV_tot += dV;
          }
