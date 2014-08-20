@@ -4,25 +4,25 @@ Restart			0	//Restart from input.h5
 
 //Time Range//
 T_Start			0.0
-T_End			1000.0
-T_Times_2pi		1
+T_End			0.2
+T_Times_2pi		0
 
 //Output Frequency//
 Num_Reports		1e5
 Num_Snapshots		0
-Num_Checkpoints		100
+Num_Checkpoints		0
 Use_Logtime		0
 
 //Grid Dimensions//
-Num_R			50
+Num_R			128
 Num_Z			1
 aspect			1.0	//Cell Aspect Ratio, for calculating N_phi
 Max_Aspect_Short	3.0	
 Max_Aspect_Long		3.0	//Aspect Ratio AMR Refinement Criteria
 
 //Domain Parameters//
-R_Min			0.5
-R_Max			1.5
+R_Min			0.0
+R_Max			0.564
 Z_Min			-0.5
 Z_Max			0.5
 Z_Periodic		0
@@ -36,15 +36,15 @@ CFL			0.2
 PLM			1.5
 Riemann_Solver		1	//0=HLL, 1=HLLC
 Mesh_Motion		3	//0=Fixed, 1=By Cell, 2=Riemann Solver
-Absorbing_BC		0
+Absorbing_BC		1
 Initial_Regrid		0
 Density_Floor		0.0
 Pressure_Floor		1e-8
 
 //Hydro Parameters
-Adiabatic_Index		1.0001 //1.666666667 //1.0001
-Isothermal		1
-Use_Viscosity		1
+Adiabatic_Index		1.666666667 //1.0001
+Isothermal		0
+Use_Viscosity		0
 Viscosity		2.5e-5
 Use_As_Alpha		0
 

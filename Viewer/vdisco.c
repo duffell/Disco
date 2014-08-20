@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR -1.0e-2//(-HUGE_VAL)  //.96
-#define VAL_CEIL  1.0e-2//(HUGE_VAL)  //1.04
+#define VAL_FLOOR 0.1//(-HUGE_VAL)  //.96
+#define VAL_CEIL  3.0//(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -36,7 +36,7 @@ int FullScreenMode=0;
 
 int t_off = 0;
 int p_off = 0;
-int cmap = 4;
+int cmap = 1;
 int draw_1d = 0;
 int draw_bar = 0;
 int draw_t   = 1;
@@ -47,8 +47,8 @@ int draw_scale = 1;
 int reflect  = 0;
 int valq=0;
 int draw_border = 0;
-int logscale = 1;
-int floors=0;
+int logscale = 0;
+int floors=1;
 int help_screen=0;
 int print_vals=0;
 
@@ -71,14 +71,16 @@ void get_rgb( double , float * , float * , float * , int );
 
 double getval( double * thisZone , int q ){
    if( q!=-1 ) return( thisZone[q] );
-   double rho = thisZone[0];
+//   double rho = thisZone[0];
 //   double X   = thisZone[5];
-   double P   = thisZone[1];
+//   double P   = thisZone[1];
 //   double ur  = thisZone[2];
-   double up  = thisZone[3];
+//   double up  = thisZone[3];
+   double Br = thisZone[5];
+   double Bp = thisZone[6];
 //   double gam = sqrt(1.+ur*ur+up*up);
 //   double e = (rho+4.*P)*gam*gam-P - rho*gam;
-   return( 1./sqrt(P/rho) );//fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+   return( Br*Br+Bp*Bp );//fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
 }
 
 void getMaxMin(void){
@@ -692,7 +694,7 @@ int main(int argc, char **argv)
 
    //printf("Rmin = %.2e Rmax = %.2e\n",r_min,r_max);
    //double thalf = .5*t_jph[Nt-1];
-   rescale = 2.0*r_jph[Nr-1]/1.5;///2.5;  //(r_max-r_min);
+   rescale = 2.5*r_jph[Nr-1]/1.5;///2.5;  //(r_max-r_min);
    //offx = .5*(r_min+r_max)/rescale;
    //offy = 0.5;//.5*(r_min+r_max)*sin(thalf)/rescale;
    //offy = .5*(r_min+r_max)/rescale;

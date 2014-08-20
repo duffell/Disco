@@ -14,8 +14,8 @@ void setRiemannParams( struct domain * theDomain ){
 
 void prim2cons( double * , double * , double , double );
 void flux( double * , double * , double , double * );
-void getUstar( double * , double * , double , double , double , double * );
-void vel( double * , double * , double * , double * , double * , double * , double );
+void getUstar( double * , double * , double , double , double , double * , double * );
+void vel( double * , double * , double * , double * , double * , double * , double , double * );
 double get_signed_dp( double , double );
 void visc_flux( double * , double * , double * , double , double * );
 
@@ -33,8 +33,9 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
    double Sl,Sr,Ss;
    double n[3];
    n[0] = 0.0;   n[1] = 1.0;   n[2] = 0.0;
+   double Bpack[5];
 
-   vel( primL , primR , &Sl , &Sr , &Ss , n , r );
+   vel( primL , primR , &Sl , &Sr , &Ss , n , r , Bpack );
 
    double Fl[NUM_Q];
    double Fr[NUM_Q];
@@ -84,7 +85,7 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double Fk[NUM_Q];
          if( w < Ss ){
             prim2cons( primL , Uk , r , 1.0 );
-            getUstar( primL , Ustar , r , Sl , Ss , n ); 
+            getUstar( primL , Ustar , r , Sl , Ss , n , Bpack ); 
             flux( primL , Fk , r , n ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
@@ -92,7 +93,7 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
             }    
          }else{
             prim2cons( primR , Uk , r , 1.0 );
-            getUstar( primR , Ustar , r , Sr , Ss , n ); 
+            getUstar( primR , Ustar , r , Sr , Ss , n , Bpack ); 
             flux( primR , Fk , r , n ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
@@ -149,8 +150,9 @@ void riemann_trans( struct face * F , double dt , int dim ){
    double Sl,Sr,Ss;
    double n[3] = {0.0,0.0,0.0};
    if( dim==1 ) n[0] = 1.0; else n[2] = 1.0;
+   double Bpack[5];
 
-   vel( primL , primR , &Sl , &Sr , &Ss , n , r );
+   vel( primL , primR , &Sl , &Sr , &Ss , n , r , Bpack );
 
    double Fl[NUM_Q];
    double Fr[NUM_Q];
@@ -191,7 +193,7 @@ void riemann_trans( struct face * F , double dt , int dim ){
          double Fk[NUM_Q];
          if( 0.0 < Ss ){
             prim2cons( primL , Uk , r , 1.0 );
-            getUstar( primL , Ustar , r , Sl , Ss , n ); 
+            getUstar( primL , Ustar , r , Sl , Ss , n , Bpack ); 
             flux( primL , Fk , r , n ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
@@ -199,7 +201,7 @@ void riemann_trans( struct face * F , double dt , int dim ){
             }    
          }else{
             prim2cons( primR , Uk , r , 1.0 );
-            getUstar( primR , Ustar , r , Sr , Ss , n ); 
+            getUstar( primR , Ustar , r , Sr , Ss , n , Bpack ); 
             flux( primR , Fk , r , n ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){

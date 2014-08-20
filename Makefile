@@ -1,10 +1,10 @@
 
-INITIAL  = kepler
-HYDRO    = euler
-BOUNDARY = fixed
+INITIAL  = bexp
+HYDRO    = mhd
+BOUNDARY = polar
 OUTPUT   = h5out
 RESTART  = no_restart
-PLANETS  = circular
+PLANETS  = none
 
 UNAME = $(shell uname)
 ifeq ($(UNAME),Linux)

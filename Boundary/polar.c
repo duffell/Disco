@@ -34,6 +34,27 @@ void boundary_trans( struct domain * theDomain , struct face * theFaces , int * 
          }
       }
    }
+
+   if( NUM_Q >= 8 ){
+      if( dim==1 && dim_rank[0] == 0 ){
+         int j;
+         for( j=0 ; j<Ng ; ++j ){
+            int i,k;
+            for( k=0 ; k<Nz ; ++k ){
+               int jk = j+Nr*k;
+               for( i=0 ; i<Np[jk] ; ++i ){
+                  struct cell * c = &(theCells[jk][i]);
+                  c->prim[BRR] = 0.0;
+                  c->prim[BPP] = 0.0;
+                  c->cons[BRR] = 0.0;
+                  c->cons[BPP] = 0.0;
+                  c->RKcons[BRR] = 0.0;
+                  c->RKcons[BPP] = 0.0;
+               }
+            }
+         }
+      }
+   }
 /*
    if( dim==1 && (dim_rank[0]==0 || dim_rank[0]==dim_size[0]-1) ){
       int k,LR;
