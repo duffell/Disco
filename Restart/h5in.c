@@ -76,6 +76,10 @@ void Doub2Cell( double * Q , struct cell * c ){
 int getN0( int , int , int );
 void freeDomain( struct domain * );
 
+void setPlanetParams( struct domain * );
+void initializePlanets( struct planet * );
+int num_diagnostics( void );
+
 void restart( struct domain * theDomain ){
 
    //This code has not been bug-tested in 3D.
@@ -220,6 +224,16 @@ void restart( struct domain * theDomain ){
    MPI_Barrier(theDomain->theComm);
    }
    if( Nq != NUM_Q+1 ){ if(rank==0)printf("Ummm, I got an hdf5 read error. Check NUM_Q.\n"); exit(1); }
+
+   setPlanetParams( theDomain );
+   int Npl = theDomain->Npl;
+   theDomain->thePlanets = (struct planet *) malloc( Npl*sizeof(struct planet) );
+   initializePlanets( theDomain->thePlanets );
+
+   double num_tools = num_diagnostics();
+   theDomain->num_tools = num_tools;
+   theDomain->theTools.t_avg = 0.0; 
+   theDomain->theTools.Qr = (double *) calloc( Nr*num_tools , sizeof(double) );
 
 }
 

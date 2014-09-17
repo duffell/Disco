@@ -2,11 +2,13 @@
 #include "../paul.h"
 
 static double q_planet = 1.0;
+static double Mach = 1.0;
 
 void setPlanetParams( struct domain * theDomain ){
 
    theDomain->Npl = 2; 
    q_planet = theDomain->theParList.Mass_Ratio;
+   Mach = theDomain->theParList.Disk_Mach;
 
 }
 
@@ -28,7 +30,7 @@ void initializePlanets( struct planet * thePlanets ){
    thePlanets[1].omega = 1.0; 
    thePlanets[1].r     = 1.0; 
    thePlanets[1].phi   = 0.0; 
-   thePlanets[1].eps   = 0.025;
+   thePlanets[1].eps   = 0.5/Mach;
 
 }
 

@@ -1,16 +1,25 @@
 
 #include "../paul.h"
 
+static double q_planet = 1.0; 
+static double Mach = 1.0;
+static double e_planet = 0.0;
+
+void setPlanetParams( struct domain * theDomain ){
+
+   theDomain->Npl = 2; 
+   q_planet = theDomain->theParList.Mass_Ratio;
+   Mach = theDomain->theParList.Disk_Mach;
+   e_planet = theDomain->theParList.Eccentricity;
+
+}
+
 double root0( double E , double e ){ 
    return( E  - e*sin(E) );
 }
 
 double root1( double E , double e ){ 
    return( 1. - e*cos(E) );
-}
-
-int numPlanets( void ){
-   return(2);
 }
 
 int planet_motion_analytic( void ){
@@ -20,26 +29,26 @@ int planet_motion_analytic( void ){
 void initializePlanets( struct planet * thePlanets ){
 
    double a  = 1.0;
-   double e  = 0.1;
-   double r  = a*(1.-e);
+   double e  = e_planet;
+   double R = a*(1.-e);
    double om = pow( a , -1.5 )*sqrt(1.-e*e)/(1.-e)/(1.-e);
  
-   double q = 3e-6;//1.25e-4;//3e-6;
+   double q = q_planet;
    double mu = q/(1.+q);
 
    thePlanets[0].M     = 1.0 - mu; 
    thePlanets[0].vr    = 0.0; 
    thePlanets[0].omega = 0.0; 
-   thePlanets[0].r     = 0.0; 
-   thePlanets[0].phi   = 0.0; 
+   thePlanets[0].r     = R*mu; 
+   thePlanets[0].phi   = M_PI; 
    thePlanets[0].eps   = 0.0;
 
    thePlanets[1].M     = mu; 
    thePlanets[1].vr    = 0.0; 
    thePlanets[1].omega = om; 
-   thePlanets[1].r     = r; 
+   thePlanets[1].r     = R*(1.0-mu); 
    thePlanets[1].phi   = 0.0; 
-   thePlanets[1].eps   = 0.025;
+   thePlanets[1].eps   = 0.5/Mach;
 
 }
 
@@ -47,10 +56,10 @@ void movePlanets( struct planet * thePlanets , double t , double dt ){
 
    double TOL = 1e-8;
 
-   double r0   = thePlanets[1].r; 
+   double r0   = thePlanets[0].r + thePlanets[1].r; 
    double phi0 = thePlanets[1].phi;
 
-   double vr = thePlanets[1].vr; 
+   double vr = thePlanets[0].vr + thePlanets[1].vr; 
    double omega = thePlanets[1].omega; 
 
    double l = r0*r0*omega;
@@ -79,16 +88,23 @@ void movePlanets( struct planet * thePlanets , double t , double dt ){
       } 
       double x = a*cos(E)-f;
       double y = b*sin(E);
-      double r   = sqrt(x*x+y*y);
+      double R   = sqrt(x*x+y*y);
       double phi = atan2(y,x);
 
-   vr = sqrt( fabs( 2.*en + 2./r - l*l/r/r ) );
+   vr = sqrt( fabs( 2.*en + 2./R - l*l/R/R ) );
    if( y<0.0 ) vr *= -1.;
 
-   thePlanets[1].r   = r;
+   double mu = q_planet/(1.+q_planet);
+
+   thePlanets[1].r   = R*(1.-mu);
    thePlanets[1].phi = phi;
-   thePlanets[1].omega = l/r/r; 
-   thePlanets[1].vr = vr;
+   thePlanets[1].omega = l/R/R; 
+   thePlanets[1].vr = vr*(1.-mu);
+
+   thePlanets[0].r   = R*mu;
+   thePlanets[0].phi = phi+M_PI;
+   thePlanets[0].omega = l/R/R;
+   thePlanets[0].vr  = vr*mu;
 
 }
 

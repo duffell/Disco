@@ -34,7 +34,7 @@ void boundary_trans( struct domain * theDomain , struct face * theFaces , int * 
          }
       }
    }
-
+/*
    if( NUM_Q >= 8 ){
       if( dim==1 && dim_rank[0] == 0 ){
          int j;
@@ -55,6 +55,8 @@ void boundary_trans( struct domain * theDomain , struct face * theFaces , int * 
          }
       }
    }
+*/
+
 /*
    if( dim==1 && (dim_rank[0]==0 || dim_rank[0]==dim_size[0]-1) ){
       int k,LR;

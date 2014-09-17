@@ -115,7 +115,7 @@ void setupCells( struct domain * theDomain ){
             if( !restart_flag ) initial( c->prim , x ); 
             if( atmos ){
                int p;
-               for( p=1 ; p<Npl ; ++p ){
+               for( p=0 ; p<Npl ; ++p ){
                   double gam = theDomain->theParList.Adiabatic_Index;
                   adjust_gas( theDomain->thePlanets+p , x , c->prim , gam );
                }

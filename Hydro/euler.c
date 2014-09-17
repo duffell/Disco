@@ -11,6 +11,7 @@ static double PRE_FLOOR = 0.0;
 static double explicit_viscosity = 0.0;
 static int include_viscosity = 0;
 static int isothermal = 0;
+static int alpha_flag = 0;
 
 void setHydroParams( struct domain * theDomain ){
    gamma_law = theDomain->theParList.Adiabatic_Index;
@@ -19,6 +20,7 @@ void setHydroParams( struct domain * theDomain ){
    PRE_FLOOR = theDomain->theParList.Pressure_Floor;
    explicit_viscosity = theDomain->theParList.viscosity;
    include_viscosity = theDomain->theParList.visc_flag;
+   alpha_flag = theDomain->theParList.alpha_flag;
 }
 
 double get_omega( double * prim ){
@@ -190,6 +192,13 @@ void source( double * prim , double * cons , double * xp , double * xm , double 
 void visc_flux( double * prim , double * gprim , double * flux , double r , double * n ){
 
    double nu = explicit_viscosity;
+
+   if( alpha_flag ){
+      double alpha = explicit_viscosity;
+      double c = sqrt( gamma_law*prim[PPP]/prim[RHO] );
+      double h = c*pow( r , 1.5 );
+      nu = alpha*c*h;
+   }
 
    double rho = prim[RHO];
    double vr  = prim[URR];

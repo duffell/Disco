@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR 0.1//(-HUGE_VAL)  //.96
-#define VAL_CEIL  3.0//(HUGE_VAL)  //1.04
+#define VAL_FLOOR -2.0 //-2.0e-2 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  2.0 //2.0e-2  //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -34,9 +34,9 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
-int t_off = 0;
+int t_off = 1;
 int p_off = 0;
-int cmap = 1;
+int cmap = 4;
 int draw_1d = 0;
 int draw_bar = 0;
 int draw_t   = 1;
@@ -47,7 +47,7 @@ int draw_scale = 1;
 int reflect  = 0;
 int valq=0;
 int draw_border = 0;
-int logscale = 0;
+int logscale = 1;
 int floors=1;
 int help_screen=0;
 int print_vals=0;
@@ -235,13 +235,13 @@ void ReSizeGLScene(int Width, int Height)
 void TakeScreenshot(const char *useless){
    int dimx = WindowWidth;
    int dimy = WindowHeight;
-   printf("Writing test.ppm... ");
+   printf("Writing out.ppm... ");
    float *pixels = new float[3*dimx*dimy];
    glReadBuffer(GL_BACK);
    glPixelStorei(GL_PACK_ALIGNMENT,1);
    glReadPixels(0, 0, dimx, dimy, GL_RGB, GL_FLOAT, pixels);
 
-   char *filename = (char *)"test.ppm";
+   char *filename = (char *)"out.ppm";
    std::ofstream fp(filename);
    fp << "P3\n" << dimx << " " << dimy << std::endl << "255\n";
    int i,j;
@@ -466,7 +466,7 @@ void DrawGLScene(){
    if( draw_t ){
       char tprint[256];
       sprintf(tprint,"t = %.2e",t/2./M_PI);
-      glutPrint( -.8 , .5 , camdist + .001 , glutFonts[6] , tprint , 0.0f, 0.0f , 0.0f , 0.5f );
+      glutPrint( -.6 , .5 , camdist + .001 , glutFonts[6] , tprint , 0.0f, 0.0f , 0.0f , 0.5f );
   //    sprintf(tprint,"uMax = %.1f",uMax);
   //    glutPrint( -.8 , .4 , camdist + .001 , glutFonts[6] , tprint , 0.0f, 0.0f , 0.0f , 0.5f );
    }
@@ -490,7 +490,7 @@ void DrawGLScene(){
    } 
 
    if( CommandMode ){
-      TakeScreenshot("test.ppm");
+      TakeScreenshot("out.ppm");
       exit(1);
    }
 
