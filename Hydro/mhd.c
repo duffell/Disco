@@ -52,7 +52,7 @@ void prim2cons( double * prim , double * cons , double r , double dV ){
    cons[LLL] = r*rho*vp*dV;
    cons[SZZ] = rho*vz*dV;
 
-   cons[BRR] = Br*dV;
+   cons[BRR] = Br*dV/r;
    cons[BPP] = Bp*dV/r;
    cons[BZZ] = Bz*dV;
 
@@ -117,7 +117,7 @@ void getUstar( double * prim , double * Ustar , double r , double Sk , double Ss
    Ustar[SZZ] = Msz;
    Ustar[TAU] = Estar;
 
-   Ustar[BRR] = Bsr;
+   Ustar[BRR] = Bsr/r;
    Ustar[BPP] = Bsp/r;
    Ustar[BZZ] = Bsz;
 
@@ -175,7 +175,7 @@ void cons2prim( double * cons , double * prim , double r , double dV ){
    double vp_off = vp - om*r;
    double vz = Sz/rho;
 
-   double Br  = cons[BRR]/dV;
+   double Br  = cons[BRR]/dV*r;
    double Bp  = cons[BPP]/dV*r;
    double Bz  = cons[BZZ]/dV;
    double B2 = Br*Br+Bp*Bp+Bz*Bz;
@@ -233,7 +233,7 @@ void flux( double * prim , double * flux , double r , double * n ){
    flux[SZZ] =     rho*vz*vn + (Pp+.5*B2)*n[2] - Bz*Bn;
    flux[TAU] = ( .5*rho*v2 + rhoe + Pp + B2 )*vn - vB*Bn;
 
-   flux[BRR] = Br*vn - vr*Bn;
+   flux[BRR] =(Br*vn - vr*Bn)/r;
    flux[BPP] =(Bp*vn - vp*Bn)/r;
    flux[BZZ] = Bz*vn - vz*Bn;
 
