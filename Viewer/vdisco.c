@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR -2.0 //-2.0e-2 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  2.0 //2.0e-2  //(HUGE_VAL)  //1.04
+#define VAL_FLOOR 0.0 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  5e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -34,21 +34,21 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
-int t_off = 1;
+int t_off = 0;
 int p_off = 0;
-int cmap = 4;
+int cmap = 1;
 int draw_1d = 0;
 int draw_bar = 0;
-int draw_t   = 1;
+int draw_t   = 0;
 int draw_spiral = 0;
 int draw_jet = 0;
 int draw_planet = 0;
-int draw_scale = 1;
+int draw_scale = 0;
 int reflect  = 0;
 int valq=0;
 int draw_border = 0;
-int logscale = 1;
-int floors=1;
+int logscale = 0;
+int floors=0;
 int help_screen=0;
 int print_vals=0;
 
@@ -74,13 +74,11 @@ double getval( double * thisZone , int q ){
 //   double rho = thisZone[0];
 //   double X   = thisZone[5];
 //   double P   = thisZone[1];
-//   double ur  = thisZone[2];
-//   double up  = thisZone[3];
    double Br = thisZone[5];
    double Bp = thisZone[6];
 //   double gam = sqrt(1.+ur*ur+up*up);
 //   double e = (rho+4.*P)*gam*gam-P - rho*gam;
-   return( Br*Br+Bp*Bp );//fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+   return( .5*(Br*Br+Bp*Bp) );//fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
 }
 
 void getMaxMin(void){
@@ -291,10 +289,10 @@ void DrawGLScene(){
       int j;
 //      for( j=0 ; j<Nr ; ++j ){
       for( j=0 ; j<Nr ; ++j ){
-         double val = theRadialData[j][q]/max_1d;//2.*(theRadialData[j][q]-minval)/(maxval-minval) - 1.;//getval(theZones[i],q);
          //if(logscale) val = log(getval(theZones[i],q))/log(10.);
          double rm = r_jph[j-1];
          double rp = r_jph[j]; 
+         double val = theRadialData[j][q]/max_1d;//*pow(.5*(rp+rm),1.5);//2.*(theRadialData[j][q]-minval)/(maxval-minval) - 1.;//getval(theZones[i],q);
          if( q==1 ) val *= 1e2;
          val = 2.*val - 1.;
          double c0 = 2.*((.5*(rp+rm)-r_jph[-1])/(r_jph[Nr-1]-r_jph[-1]) - .5)/rescale;
@@ -302,6 +300,39 @@ void DrawGLScene(){
          glVertex3f( c0-xoff, c1-yoff, camdist-zoff+.001 );
       }    
       glEnd();
+/*
+      glColor3f(0.5,0.5,0.5);
+      glBegin( GL_LINE_STRIP );
+
+      for( j=0 ; j<Nr ; ++j ){
+         //if(logscale) val = log(getval(theZones[i],q))/log(10.);
+         double rm = r_jph[j-1];
+         double rp = r_jph[j];
+         double r = .5*(rp+rm); 
+         double val = pow(r,-1.5)/max_1d;//*pow(.5*(rp+rm),1.5);//2.*(theRadialData[j][q]-minval)/(maxval-minval) - 1.;//getval(theZones[i],q);         if( q==1 ) val *= 1e2;
+         val = 2.*val - 1.;
+         double c0 = 2.*((.5*(rp+rm)-r_jph[-1])/(r_jph[Nr-1]-r_jph[-1]) - .5)/rescale;                 double c1 = val/rescale;
+         glVertex3f( c0-xoff, c1-yoff, camdist-zoff+.001 );
+      }       
+      glEnd();
+*/
+      if( draw_planet ){
+         double eps = 0.01;
+         int p;
+         for( p=0 ; p<Npl ; ++p ){
+            double r   = thePlanets[p][0];
+            double x = 2.*(( r - r_jph[-1] )/( r_jph[Nr-1]-r_jph[-1] ) - .5)/rescale;
+            glColor3f(0.0,0.0,0.0);
+            glLineWidth(2.0);
+            glBegin(GL_LINE_LOOP);
+            glVertex3f( x-xoff+eps , 1./rescale-yoff+eps , camdist+.001 );
+            glVertex3f( x-xoff-eps , 1./rescale-yoff+eps , camdist+.001 );
+            glVertex3f( x-xoff-eps , 1./rescale-yoff-eps , camdist+.001 );
+            glVertex3f( x-xoff+eps , 1./rescale-yoff-eps , camdist+.001 );
+            glEnd();
+         }
+      }
+
    }else{
       int Num_Draws = 1+reflect+draw_border;
       int count;
@@ -440,17 +471,25 @@ void DrawGLScene(){
    }
 
    if( draw_spiral ){
-      int Nr = 200;
+      double rp   = thePlanets[1][0];
+      double dr = .07;
+      int Nr = 50;
       double Rmin = 0.5;
       double Rmax = 1.5;
       int k;
-      glLineWidth(2.0f);
+      glLineWidth(4.0f);
       glColor3f(1.0,1.0,1.0);
       glBegin(GL_LINE_LOOP);
       for( k=0 ; k<Nr ; ++k ){
-         double r   = 1.0;//((double)k+0.5)/(double)Nr*(Rmax-Rmin) + Rmin;
-         double phi = (double)k/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
-         if( r<1. ) phi = -phi;
+         double phi0 = ((double)k+.5)/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
+         double x0 = rp + dr*cos(phi0);
+         double y0 = dr*sin(phi0);
+         
+         double phi = atan2(y0,x0);
+         double r   = sqrt(x0*x0+y0*y0);
+//         double phi = (double)k/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
+//         double r   = 2./(1.+sin(phi));//1.0;//((double)k+0.5)/(double)Nr*(Rmax-Rmin) + Rmin;
+//         if( r<1. ) phi = -phi;
          r /= rescale;
          
          glVertex3f( r*cos(phi)-xoff , r*sin(phi)-yoff , camdist + .0011 );
@@ -460,6 +499,29 @@ void DrawGLScene(){
          }
       }
       glEnd();
+/*
+      e += 0.01;
+      glBegin(GL_LINE_LOOP);
+      for( k=0 ; k<Nr ; ++k ){
+         double phi0 = ((double)k-.5)/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
+         double x0 = 1.+e*cos(phi0);
+         double y0 = e*sin(phi0);
+         
+         double phi = atan2(y0,x0);
+         double r   = sqrt(x0*x0+y0*y0);
+//         double phi = (double)k/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
+//         double r   = 2./(1.+sin(phi));//1.0;//((double)k+0.5)/(double)Nr*(Rmax-Rmin) + Rmin;
+//         if( r<1. ) phi = -phi;
+         r /= rescale;
+         
+         glVertex3f( r*cos(phi)-xoff , r*sin(phi)-yoff , camdist + .0011 );
+         if( k%2==1 ){
+            glEnd();
+            glBegin(GL_LINE_LOOP);
+         }
+      }
+      glEnd();
+*/
    }
    }
 
@@ -694,13 +756,13 @@ int main(int argc, char **argv)
 
    //printf("Rmin = %.2e Rmax = %.2e\n",r_min,r_max);
    //double thalf = .5*t_jph[Nt-1];
-   rescale = 2.5*r_jph[Nr-1]/1.5;///2.5;  //(r_max-r_min);
+   rescale = 1.7*r_jph[Nr-1];  //(r_max-r_min);
    //offx = .5*(r_min+r_max)/rescale;
    //offy = 0.5;//.5*(r_min+r_max)*sin(thalf)/rescale;
    //offy = .5*(r_min+r_max)/rescale;
    //rescale *= .35;
    offy = 0.0;//0.5/rescale;
-   offx = 0.0;//0.5/rescale;
+   offx = 0.0;//1.0/rescale;
 
 //////////////////////////////
    glutInit(&argc, argv);  

@@ -2,23 +2,29 @@
 #include "paul.h"
 
 int num_diagnostics(void){
-   return(3);
+   return(4);
 }
 
-void planetaryForce( struct planet * , double , double , double * , double * , int );
+void planetaryForce( struct planet * , double , double , double , double * , double * , double * , int );
 
 void get_diagnostics( double * x , double * prim , double * Q , struct domain * theDomain ){
    double r = x[0];
    double phi = x[1];
-   Q[0] = prim[RHO];
-   Q[1] = 2.*M_PI*r*prim[RHO]*prim[URR];
-   double Fr,Fp;
+
+   double rho = prim[RHO];
+   double vr = prim[URR];
+   double omega = prim[UPP];
+
+   Q[0] = rho;
+   Q[1] = 2.*M_PI*r*rho*vr;
+   double Fr,Fp,Fz;
    Fp = 0.0;
    if( theDomain->Npl > 1 ){
       struct planet * pl = theDomain->thePlanets+1;
-      planetaryForce( pl , r , phi , &Fr , &Fp , 0 );
+      planetaryForce( pl , r , phi , 0.0 , &Fr , &Fp , &Fz , 0 );
    }
-   Q[2] = 2.*M_PI*r*prim[RHO]*(r*Fp);
+   Q[2] = 2.*M_PI*r*rho*(r*Fp);
+   Q[3] = 2.*M_PI*r*rho*( r*r*omega*vr );
 }
 
 void zero_diagnostics( struct domain * theDomain ){

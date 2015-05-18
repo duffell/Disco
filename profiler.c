@@ -43,15 +43,18 @@ void generate_log( struct domain * theDomain ){
 
    double avgdt = (double)seconds/2./(double)Nc/(double)Nt;
 
+   int size = theDomain->size;
+
    if( theDomain->rank==0 ){
       FILE * logfile = fopen("times.log","w");
-      fprintf(logfile,"Run using %d MPI process",theDomain->size);
+      fprintf(logfile,"Run using %d MPI process",size);
       if( theDomain->size > 1 ) fprintf(logfile,"es");
       fprintf(logfile,".\n");
       fprintf(logfile,"Total time = %d sec\n",seconds);
       fprintf(logfile,"Number of cells = %d\n",Nc);
       fprintf(logfile,"Number of timesteps = %d (x%d)\n",Nt,2);
       fprintf(logfile,"Megazones per second = %.2e\n",1./(avgdt*1e6));
+      fprintf(logfile,"Megazones per CPU second = %.2e\n",1./(avgdt*1e6*size));
       fprintf(logfile,"Time/zone/step = %.2e microseconds\n",(avgdt*1e6));
       fclose(logfile);
    }

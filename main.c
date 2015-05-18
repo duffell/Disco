@@ -16,6 +16,7 @@ void setHydroParams( struct domain * );
 void setGeometryParams( struct domain * );
 void setRiemannParams( struct domain * );
 void setDiskParams( struct domain * );
+void setHlldParams( struct domain * );
 
 void setupDomain( struct domain * );
 void freeDomain( struct domain * );
@@ -42,6 +43,7 @@ int main( int argc , char * argv[] ){
 
    setICparams( &theDomain );
    setHydroParams( &theDomain );
+   setHlldParams( &theDomain );
    setGeometryParams( &theDomain );
    setRiemannParams( &theDomain );
    setDiskParams( &theDomain );

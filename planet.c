@@ -37,7 +37,7 @@ void adjust_gas( struct planet * pl , double * x , double * prim , double gam ){
 
 }
 
-void planetaryForce( struct planet * pl , double r , double phi , double * fr , double * fp , int mode ){
+void planetaryForce( struct planet * pl , double r , double phi , double z , double * fr , double * fp , double * fz , int mode ){
 
    double rp = pl->r;
    double pp = pl->phi;
@@ -45,7 +45,7 @@ void planetaryForce( struct planet * pl , double r , double phi , double * fr , 
    double sinp = sin(phi);
    double dx = r*cosp-rp*cos(pp);
    double dy = r*sinp-rp*sin(pp);
-   double script_r = sqrt(dx*dx+dy*dy);
+   double script_r = sqrt(dx*dx+dy*dy+z*z);
 
    double f1 = -fgrav( pl->M , script_r , pl->eps );
 
@@ -67,6 +67,7 @@ void planetaryForce( struct planet * pl , double r , double phi , double * fr , 
 
    *fr = cosap*f1; //*fd;
    *fp = sinap*f1; //*fd;
+   *fz = 0.0;
 
 }
 
@@ -84,9 +85,8 @@ void planet_src( struct planet * pl , double * prim , double * cons , double * x
    double dphi = get_dp(xp[1],xm[1]);
    double phi = xm[1] + 0.5*dphi;
 
-   double Fr,Fp;
-   double Fz = 0.0;
-   planetaryForce( pl , r , phi , &Fr , &Fp , 0 );
+   double Fr,Fp,Fz;
+   planetaryForce( pl , r , phi , 0.0 , &Fr , &Fp , &Fz , 0 );
 
    cons[SRR] += rho*Fr*dVdt;
    cons[SZZ] += rho*Fz*dVdt;

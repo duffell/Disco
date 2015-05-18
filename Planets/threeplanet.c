@@ -6,7 +6,7 @@ static double Mach = 1.0;
 
 void setPlanetParams( struct domain * theDomain ){
 
-   theDomain->Npl = 3; 
+   theDomain->Npl = 4; 
    q_planet = theDomain->theParList.Mass_Ratio;
    Mach = theDomain->theParList.Disk_Mach;
 
@@ -27,6 +27,7 @@ void initializePlanets( struct planet * thePlanets ){
 
    double r1 = pow( 2. , -1./3. );
    double r2 = pow( 2. , 1./3.  );
+   double r3 = .5;
 
    thePlanets[1].M     = q_planet; 
    thePlanets[1].vr    = 0.0; 
@@ -42,11 +43,19 @@ void initializePlanets( struct planet * thePlanets ){
    thePlanets[2].phi   = 0.0; 
    thePlanets[2].eps   = 0.5*r2/Mach;
 
+   thePlanets[3].M     = q_planet; 
+   thePlanets[3].vr    = 0.0; 
+   thePlanets[3].omega = pow( r3 , -1.5 ); 
+   thePlanets[3].r     = r3;
+   thePlanets[3].phi   = 0.0; 
+   thePlanets[3].eps   = 0.5*r3/Mach;
+
 }
 
 void movePlanets( struct planet * thePlanets , double t , double dt ){
    thePlanets[1].phi += thePlanets[1].omega*dt;
    thePlanets[2].phi += thePlanets[2].omega*dt;
+   thePlanets[3].phi += thePlanets[3].omega*dt;
 }
 
 void forcePlanets( struct planet * thePlanets , double dt ){
