@@ -22,7 +22,7 @@ int get_num_rzFaces( int Nr , int Nz , int dim ){
    else return( (Nz-1)*Nr );
 }
 
-void addFace( struct face * theFaces , int n , struct cell * cL , struct cell * cR , double dxL , double dxR , double * xp , double * xm , int dim ){
+void addFace( struct face * theFaces , int n , struct cell * cL , struct cell * cR , double dxL , double dxR , double * xp , double * xm , int dim , int LRtype ){
    int d;
    for( d=0 ; d<3 ; ++d ) theFaces[n].cm[d] = .5*(xp[d]+xm[d]); //Consider calculating center of mass in geometry.c
    double dp = get_dp(xp[1],xm[1]);
@@ -38,6 +38,12 @@ void addFace( struct face * theFaces , int n , struct cell * cL , struct cell * 
    theFaces[n].dxR = dxR;
    theFaces[n].dphi= dp;//get_dp(xp[1],xm[1]);
    theFaces[n].dA  = get_dA(xp,xm,dim);
+
+   theFaces[n].E = 0.0;
+   theFaces[n].B = 0.0;
+   theFaces[n].LRtype = LRtype;
+   theFaces[n].flip_flag = 0;
+
 }
 
 void buildfaces( struct domain * theDomain , struct face * theFaces , int * ntj , int dim , int mode ){
@@ -102,14 +108,14 @@ void buildfaces( struct domain * theDomain , struct face * theFaces , int * ntj 
             if( dphi < 0.0 ){
                xp[1] = cL->piph;
                xm[1] = cL->piph-cL->dphi;
-               if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim );
+               if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim , 0 );
                ++n;
             }else{
             //Otherwise, three steps:
                //Step A: face formed out of beginning of cell- and end of cell+. ++ip;
                xp[1] = cR->piph;
                xm[1] = cL->piph-cL->dphi;
-               if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim );
+               if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim , 1 );
                ++n;
 
                ++ip;
@@ -122,7 +128,7 @@ void buildfaces( struct domain * theDomain , struct face * theFaces , int * ntj 
                   //Step B: (optional) all faces formed out of part of cell- and all of cell+. ++ip;
                   xp[1] = cR->piph;
                   xm[1] = cR->piph-cR->dphi;
-                  if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim );
+                  if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim , 1 );
                   ++n;
                
                   ++ip;
@@ -135,7 +141,7 @@ void buildfaces( struct domain * theDomain , struct face * theFaces , int * ntj 
                //Step C: face formed out of end of cell- and beginning of cell+.
                xp[1] = cL->piph;
                xm[1] = cR->piph-cR->dphi;
-               if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim );
+               if( mode==1 ) addFace( theFaces , n , cL , cR , dxL , dxR , xp , xm , dim , 0 );
                ++n;
             }
          }

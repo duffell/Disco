@@ -19,8 +19,8 @@ void clean_pi( struct domain * theDomain ){
       for( i=0 ; i<Np[jk] ; ++i ){
          struct cell * c = &(theCells[jk][i]);
          double phi = c->piph;
-         while( phi > phi_max ){ phi -= phi_max; c->RKpiph -= phi_max; }
-         while( phi < 0.0     ){ phi += phi_max; c->RKpiph += phi_max; }
+         while( phi > phi_max ){ phi -= phi_max; }
+         while( phi < 0.0     ){ phi += phi_max; }
          c->piph = phi; 
       }    
    }
@@ -218,6 +218,9 @@ void adjust_RK_cons( struct domain * theDomain , double RK ){
          for( q=0 ; q<NUM_Q ; ++q ){
             c->cons[q] = (1.-RK)*c->cons[q] + RK*c->RKcons[q];
          }
+         for( q=0 ; q<NUM_FACES ; ++q ){
+            c->Phi[q] = (1.-RK)*c->Phi[q] + RK*c->RK_Phi[q];
+         }
       }
    }
 }
@@ -232,7 +235,7 @@ void adjust_RK_planets( struct domain * theDomain , double RK ){
    }
 }
 
-void move_cells( struct domain * theDomain , double RK , double dt){
+void move_cells( struct domain * theDomain , double dt){
    struct cell ** theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    int Nz = theDomain->Nz;
@@ -241,7 +244,7 @@ void move_cells( struct domain * theDomain , double RK , double dt){
    for( jk=0 ; jk<Nr*Nz ; ++jk ){
       for( i=0 ; i<Np[jk] ; ++i ){
          struct cell * c = &(theCells[jk][i]);
-         c->piph = (1.-RK)*c->piph + RK*c->RKpiph + c->wiph*dt;
+         c->piph += c->wiph*dt;
       }
    }
 }
@@ -459,7 +462,6 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       //Remove Zone at iS+1
       sweep[iS].dphi  += sweep[iSp].dphi;
       sweep[iS].piph   = sweep[iSp].piph;
-      sweep[iS].RKpiph = sweep[iSp].RKpiph;
       int q;
       for( q=0 ; q<NUM_Q ; ++q ){
          sweep[iS].cons[q]   += sweep[iSp].cons[q];
@@ -495,7 +497,6 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       double phi0 = .5*(phip+phim);
 
       sweep[iL].piph   = phi0;
-      sweep[iL].RKpiph = phi0;
       sweep[iL].dphi   = .5*dphi;
       sweep[iL+1].dphi = .5*dphi;
 

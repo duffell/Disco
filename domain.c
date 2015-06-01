@@ -80,6 +80,7 @@ void restart( struct domain * );
 void calc_dp( struct domain * );
 void set_wcell( struct domain * );
 void adjust_gas( struct planet * , double * , double * , double );
+void set_B_fields( struct domain * );
 
 void setupCells( struct domain * theDomain ){
 

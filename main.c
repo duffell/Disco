@@ -8,6 +8,7 @@ void setupCells( struct domain * );
 void regrid( struct domain * );
 void exchangeData( struct domain * , int );
 double getmindt( struct domain * );
+void calc_prim( struct domain * );
 
 void read_par_file( struct domain * );
  
@@ -17,6 +18,9 @@ void setGeometryParams( struct domain * );
 void setRiemannParams( struct domain * );
 void setDiskParams( struct domain * );
 void setHlldParams( struct domain * );
+
+int  set_B_flag( void );
+void set_B_fields( struct domain * );
 
 void setupDomain( struct domain * );
 void freeDomain( struct domain * );
@@ -54,6 +58,8 @@ int main( int argc , char * argv[] ){
 */
    if( theDomain.Nr > 1 ) exchangeData( &theDomain , 0 );
    if( theDomain.Nz > 1 ) exchangeData( &theDomain , 1 );
+
+   if( set_B_flag() ) set_B_fields( &theDomain );
 
    if( theDomain.rank==0 && !(theDomain.theParList.restart_flag) ){
       FILE * rFile = fopen("report.dat","w");
