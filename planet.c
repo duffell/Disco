@@ -46,6 +46,7 @@ void planetaryForce( struct planet * pl , double r , double phi , double z , dou
    double dx = r*cosp-rp*cos(pp);
    double dy = r*sinp-rp*sin(pp);
    double script_r = sqrt(dx*dx+dy*dy+z*z);
+   double script_r_perp = sqrt(dx*dx+dy*dy);
 
    double f1 = -fgrav( pl->M , script_r , pl->eps );
 
@@ -65,9 +66,12 @@ void planetaryForce( struct planet * pl , double r , double phi , double z , dou
    double fd = 1./(1.+exp(-( script_r/rH-pd)/(pd/10.)));
 */
 
-   *fr = cosap*f1; //*fd;
-   *fp = sinap*f1; //*fd;
-   *fz = 0.0;
+   double sint = script_r_perp/script_r;
+   double cost = z/script_r;
+
+   *fr = cosap*f1*sint; //*fd;
+   *fp = sinap*f1*sint; //*fd;
+   *fz = f1*cost;
 
 }
 
@@ -84,9 +88,10 @@ void planet_src( struct planet * pl , double * prim , double * cons , double * x
    double vp  = r*omega;
    double dphi = get_dp(xp[1],xm[1]);
    double phi = xm[1] + 0.5*dphi;
+   double z = .5*(xp[2]+xm[2]);
 
    double Fr,Fp,Fz;
-   planetaryForce( pl , r , phi , 0.0 , &Fr , &Fp , &Fz , 0 );
+   planetaryForce( pl , r , phi , z , &Fr , &Fp , &Fz , 0 );
 
    cons[SRR] += rho*Fr*dVdt;
    cons[SZZ] += rho*Fz*dVdt;

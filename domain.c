@@ -12,6 +12,10 @@ void setHydroParams( struct domain * );
 void setGeometryParams( struct domain * );
 void setRiemannParams( struct domain * );
 void setPlanetParams( struct domain * );
+void setHlldParams( struct domain * );
+void setDiskParams( struct domain * );
+
+int get_num_rzFaces( int , int , int );
 
 void setupDomain( struct domain * theDomain ){
 
@@ -35,9 +39,10 @@ void setupDomain( struct domain * theDomain ){
    double num_tools = num_diagnostics();
    theDomain->num_tools = num_tools;
    theDomain->theTools.t_avg = 0.0;
-   theDomain->theTools.Qr = (double *) calloc( Nr*num_tools , sizeof(double) );
-
+   theDomain->theTools.Qr = (double *) malloc( Nr*num_tools*sizeof(double) );
    int i;
+   for( i=0 ; i<Nr*num_tools ; ++i ) theDomain->theTools.Qr[i] = 0.0;
+
    double Pmax = theDomain->theParList.phimax;
    for( jk=0 ; jk<Nr*Nz ; ++jk ){
       double p0 = Pmax*(double)rand()/(double)RAND_MAX;
@@ -66,10 +71,20 @@ void setupDomain( struct domain * theDomain ){
    theDomain->nsnp=-1;
    theDomain->nchk=-1;
 
+   theDomain->theFaces_1 = NULL;
+   theDomain->theFaces_2 = NULL;
+   theDomain->N_ftracks_r = get_num_rzFaces( Nr , Nz , 1 );
+   theDomain->N_ftracks_z = get_num_rzFaces( Nr , Nz , 2 );
+
+   theDomain->fIndex_r = (int *) malloc( (theDomain->N_ftracks_r+1)*sizeof(int) );
+   theDomain->fIndex_z = (int *) malloc( (theDomain->N_ftracks_z+1)*sizeof(int) );
+
    setICparams( theDomain );
    setHydroParams( theDomain );
    setGeometryParams( theDomain );
    setRiemannParams( theDomain );
+   setHlldParams( theDomain );
+   setDiskParams( theDomain );
 
 }
 
@@ -165,6 +180,8 @@ void freeDomain( struct domain * theDomain ){
    free( theDomain->z_kph );
    free( theDomain->thePlanets );
    free( theDomain->theTools.Qr );
+   free( theDomain->fIndex_r );
+   free( theDomain->fIndex_z );
 
 }
 

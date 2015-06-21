@@ -39,7 +39,7 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
    double n[3] = {0.0,1.0,0.0};
 
-   if( use_B_fields ){
+   if( use_B_fields && NUM_Q > BPP ){
       double Bp = .5*(primL[BPP]+primR[BPP]);
       primL[BPP] = Bp;
       primR[BPP] = Bp;
@@ -212,7 +212,7 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       consR[q] += (Flux[q] - w*Ustr[q])*dAdt;
    }
 
-   if( use_B_fields ){
+   if( use_B_fields && NUM_Q > BPP ){
       if( dim==0 ){
          *E_riemann = Flux[BRR]*r;
       }else if( dim==1 ){

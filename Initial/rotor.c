@@ -35,3 +35,4 @@ void initial( double * prim , double * x ){
    if( NUM_N>0 ) prim[NUM_C] = 0.0;
 
 }
+

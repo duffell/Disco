@@ -23,6 +23,10 @@ void setHydroParams( struct domain * theDomain ){
    alpha_flag = theDomain->theParList.alpha_flag;
 }
 
+int set_B_flag(void){
+   return(0);
+}
+
 double get_omega( double * prim ){
    return( prim[UPP] );
 }

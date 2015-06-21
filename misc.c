@@ -330,32 +330,51 @@ void phi_flux( struct domain * theDomain , double dt ){
 
 }
 
-void buildfaces( struct domain * , struct face * , int * , int , int );
+void buildfaces( struct domain * , int , int );
 void plm_trans( struct domain * , struct face * , int , int );
 void riemann_trans( struct face * , double , int );
 
-void trans_flux( struct domain * theDomain , struct face * theFaces , int Nf , double dt , int dim ){
+void trans_flux( struct domain * theDomain , double dt , int dim ){
+
+   int Nf;
+   struct face * theFaces;
+   if( dim==1 ){
+      Nf = theDomain->fIndex_r[theDomain->N_ftracks_r];
+      theFaces = theDomain->theFaces_1;
+   }else{
+      Nf = theDomain->fIndex_z[theDomain->N_ftracks_z];
+      theFaces = theDomain->theFaces_2;
+   }
 
    plm_trans( theDomain , theFaces , Nf , dim );
+
    int f;
    for( f=0 ; f<Nf ; ++f ){
-      riemann_trans( &(theFaces[f]) , dt , dim );
+      riemann_trans( theFaces + f , dt , dim );
    }
 
 }
 
-int get_num_rzFaces( int , int , int );
 
-void setup_faces( struct domain * theDomain , struct face ** theFaces , int * nn , int dim ){
+void setup_faces( struct domain * theDomain , int dim ){
 
-   int Nr = theDomain->Nr;
-   int Nz = theDomain->Nz;
-   int NN = get_num_rzFaces( Nr , Nz , dim );
+   struct face ** theFaces;
+   int NN;
+   int * nn;
+   if( dim==1 ){ 
+      theFaces = &(theDomain->theFaces_1);
+      nn = theDomain->fIndex_r;
+      NN = theDomain->N_ftracks_r;
+   }else{
+      theFaces = &(theDomain->theFaces_2);
+      nn = theDomain->fIndex_z;
+      NN = theDomain->N_ftracks_z;
+   }
 
-   buildfaces( theDomain , NULL      , nn , dim , 0 );
+   buildfaces( theDomain , dim , 0 );
    int Nf = nn[NN];
    *theFaces = (struct face *) malloc( Nf*sizeof(struct face) );
-   buildfaces( theDomain , *theFaces , nn , dim , 1 );
+   buildfaces( theDomain , dim , 1 );
 
 }
 

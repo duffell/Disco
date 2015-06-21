@@ -23,7 +23,7 @@
 #define ESCAPE 27
 
 #define VAL_FLOOR 0.0 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  5e-5 //(HUGE_VAL)  //1.04
+#define VAL_CEIL  1.0 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -34,9 +34,10 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
+int dim3d = 1;
 int t_off = 0;
 int p_off = 0;
-int cmap = 1;
+int cmap = 4;
 int draw_1d = 0;
 int draw_bar = 0;
 int draw_t   = 0;
@@ -57,11 +58,13 @@ double rotate_angle = M_PI/2.;
 double offx, offy, rescale, maxval, minval;
 
 double t;
-int Nr,Nq,Npl,N1d;
+int Nr,Nz,Nq,Npl,N1d,midz;
 int * Np;
 double * r_jph;
+double * z_kph;
 double ** p_iph;
 double *** theZones;
+double ** rzZones;
 double ** thePlanets;
 double ** theRadialData;
 
@@ -71,14 +74,14 @@ void get_rgb( double , float * , float * , float * , int );
 
 double getval( double * thisZone , int q ){
    if( q!=-1 ) return( thisZone[q] );
-//   double rho = thisZone[0];
+   double rho = thisZone[0];
 //   double X   = thisZone[5];
-//   double P   = thisZone[1];
+   double P   = thisZone[1];
    double Br = thisZone[5];
    double Bp = thisZone[6];
 //   double gam = sqrt(1.+ur*ur+up*up);
 //   double e = (rho+4.*P)*gam*gam-P - rho*gam;
-   return( .5*(Br*Br+Bp*Bp) );//fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+   return( fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
 }
 
 void getMaxMin(void){
@@ -87,7 +90,7 @@ void getMaxMin(void){
    minval = HUGE_VAL;
    int q = valq;
    double val;
-   int i,j;
+   int i,j,k;
    for( j=0 ; j<Nr ; ++j ){
       for( i=0 ; i<Np[j] ; ++i ){
          val = getval( theZones[j][i], q );
@@ -262,6 +265,19 @@ void DrawGLScene(){
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
    glLoadIdentity();
 
+   double RotationAngleX = 0.0;
+   double RotationAngleY = 0.0;
+   double RotationAngleZ = 0.0;
+
+   if( dim3d ) RotationAngleX = -60.0;
+ 
+ 
+   glTranslatef( 0.0 , 0.0 , -CAM_BACKUP );
+
+   glRotatef(RotationAngleX, 1, 0, 0);
+   glRotatef(RotationAngleY, 0, 1, 0);
+   glRotatef(RotationAngleZ, 0, 0, 1);
+
    int q = valq;
 
    getMaxMin();
@@ -270,7 +286,7 @@ void DrawGLScene(){
       print_vals=1;
    }
 
-   double camdist = -CAM_BACKUP;
+   double camdist = 0.0;//-CAM_BACKUP;
    double xoff    = offx;
    double yoff    = offy;
    double zoff    = 0.0;
@@ -379,36 +395,87 @@ void DrawGLScene(){
             float rrr,ggg,bbb;
             get_rgb( val , &rrr , &ggg , &bbb , cmap );
 
-            if( !draw_border_now ){ 
-               glColor3f( rrr , ggg , bbb );
-               glBegin(GL_POLYGON);
-            }else{
+            if( !dim3d || sin(phi)>0 || cos(phi)<0.0 ){
+               if( !draw_border_now ){ 
+                  glColor3f( rrr , ggg , bbb );
+                  glBegin(GL_POLYGON);
+               }else{
+                  glLineWidth(2.0f);
+                  glColor3f(0.0,0.0,0.0);
+                  glBegin(GL_LINE_LOOP);
+               }
+     
+               double c0 = rm*cos(phim);
+               double c1 = rm*sin(phim);
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+
+               c0 = rp*cos(phim);
+               c1 = rp*sin(phim);
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+
+               c0 = rp*cos(phi)/cos(.5*dp);
+               c1 = rp*sin(phi)/cos(.5*dp);
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+
+               c0 = rp*cos(phip);
+               c1 = rp*sin(phip);
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+
+               c0 = rm*cos(phip);
+               c1 = rm*sin(phip);
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+
+               glEnd();
+            }
+         }
+         if( dim3d ){
+            int k;
+            for( k=0 ; k<Nz/2 ; ++k ){
+               int jk = j*Nz+k;
+               double rp = r_jph[j]/rescale;
+               double rm = r_jph[j-1]/rescale;
+               double zp = z_kph[k]/rescale;
+               double zm = z_kph[k-1]/rescale;
+
+               double phi = 0.0;//rzZones[jk][Nq];
+
+            double val = (getval(rzZones[jk],q)-minval)/(maxval-minval);
+            if(logscale) val = (log(getval(rzZones[jk],q))/log(10.)-minval)/(maxval-minval);
+            if( val > 1.0 ) val = 1.0;
+            if( val < 0.0 ) val = 0.0;
+            float rrr,ggg,bbb;
+            get_rgb( val , &rrr , &ggg , &bbb , cmap );
+               if( !draw_border_now ){ 
+                  glColor3f( rrr , ggg , bbb );
+                  glBegin(GL_POLYGON);
+               }else{
+                  glLineWidth(2.0f);
+                  glColor3f(0.0,0.0,0.0);
+                  glBegin(GL_LINE_LOOP);
+               } 
+                  
+                  glVertex3f( rp*cos(phi) - xoff , rp*sin(phi) - yoff + zoff, zp );
+                  glVertex3f( rm*cos(phi) - xoff , rm*sin(phi) - yoff + zoff, zp );
+                  glVertex3f( rm*cos(phi) - xoff , rm*sin(phi) - yoff + zoff, zm );
+                  glVertex3f( rp*cos(phi) - xoff , rp*sin(phi) - yoff + zoff, zm );
+                  glEnd();
+            }
+            if( draw_border_now ){
                glLineWidth(2.0f);
                glColor3f(0.0,0.0,0.0);
                glBegin(GL_LINE_LOOP);
+
+               double rp = r_jph[Nr-1]/rescale;
+               double rm =-r_jph[Nr-1]/rescale;
+               double zp = z_kph[Nz-1]/rescale;
+               double zm = z_kph[  -1]/rescale;
+
+               glVertex3f( rp-xoff , 0.0 , zp );
+               glVertex3f( rm-xoff , 0.0 , zp );
+               glVertex3f( rm-xoff , 0.0 , zm );
+               glVertex3f( rp-xoff , 0.0 , zm );
+               glEnd();
             }
-     
-            double c0 = rm*cos(phim);
-            double c1 = rm*sin(phim);
-            glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
-
-            c0 = rp*cos(phim);
-            c1 = rp*sin(phim);
-            glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
-
-            c0 = rp*cos(phi)/cos(.5*dp);
-            c1 = rp*sin(phi)/cos(.5*dp);
-            glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
-
-            c0 = rp*cos(phip);
-            c1 = rp*sin(phip);
-            glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
-
-            c0 = rm*cos(phip);
-            c1 = rm*sin(phip);
-            glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
-
-            glEnd();
          }
       }
    }
@@ -578,6 +645,7 @@ void keyPressed(unsigned char key, int x, int y)
    }
    if( key >= (int)'0' && key < (int)'1'+Nq ) valq = (int)key-(int)'1';
    if( key == 'b' ) draw_bar = !draw_bar;
+   if( key == 'd' ) dim3d = !dim3d;
    if( key == 'f' ) floors = !floors;
    if( key == 'g' ) draw_border = !draw_border;
    if( key == 'h' ) help_screen = !help_screen;
@@ -647,24 +715,41 @@ int main(int argc, char **argv)
    
    readSimple( filename , group1 , (char *)"T" , &t , H5T_NATIVE_DOUBLE );
    getH5dims( filename , group1 , (char *)"r_jph" , dims );
-
    Nr = dims[0]-1;
+   getH5dims( filename , group1 , (char *)"z_kph" , dims );
+   Nz = dims[0]-1;
+
    Np = (int *) malloc( Nr*sizeof(int) );
    r_jph = (double *) malloc( (Nr+1)*sizeof(double) );
+   z_kph = (double *) malloc( (Nz+1)*sizeof(double) );
    int Tindex[Nr];
    
-   printf("t = %.2f, Nr = %d\n",t,Nr);
+   printf("t = %.2f, Nr = %d Nz = %d\n",t,Nr,Nz);
 
    readSimple( filename , group1 , (char *)"r_jph" , r_jph , H5T_NATIVE_DOUBLE );
+   readSimple( filename , group1 , (char *)"z_kph" , z_kph , H5T_NATIVE_DOUBLE );
 
+   midz = Nz/2;
 
    int start[2]    = {0,0};
-   int loc_size[2] = {Nr,1};
-   int glo_size[2] = {Nr,1};
+   int loc_size[2] = {Nr,Nz};
+   int glo_size[2] = {Nr,Nz};
 
-   readPatch( filename , group1 , (char *)"Np"    , Np     , H5T_NATIVE_INT , 2 , start , loc_size , glo_size);
-   readPatch( filename , group1 , (char *)"Index" , Tindex , H5T_NATIVE_INT , 2 , start , loc_size , glo_size);
+   int Np_All[Nr*Nz];
+   int Tindex_All[Nr*Nz];
+   int Id_phi0[Nr*Nz];
 
+   readPatch( filename , group1 , (char *)"Np"      , Np_All     , H5T_NATIVE_INT , 2 , start , loc_size , glo_size);
+   readPatch( filename , group1 , (char *)"Index"   , Tindex_All , H5T_NATIVE_INT , 2 , start , loc_size , glo_size);
+   readPatch( filename , group1 , (char *)"Id_phi0" , Id_phi0    , H5T_NATIVE_INT , 2 , start , loc_size , glo_size);
+
+   int i,j,k;
+   for( j=0 ; j<Nr ; ++j ){
+      k = midz;
+      int jk = j*Nz+k;
+      Np[j]     = Np_All[jk];
+      Tindex[j] = Tindex_All[jk];
+   }
 
    getH5dims( filename , group2 , (char *)"Cells" , dims );
    int Nc = dims[0];
@@ -676,13 +761,19 @@ int main(int argc, char **argv)
    printf("Nc = %d Nr = %d Nq=%d Npl=%d NpDat=%d\n",Nc,Nr,Nq,Npl,NpDat);
 
    theZones = (double ***) malloc( Nr*sizeof(double **) );
-   int i,j,q;
+   int q;
    for( j=0 ; j<Nr ; ++j ){
       theZones[j] = (double **) malloc( Np[j]*sizeof( double * ) );
       for( i=0 ; i<Np[j] ; ++i ){
          theZones[j][i] = (double *) malloc( Nq*sizeof( double ) );
       }
    }
+
+   rzZones = (double **) malloc( Nr*Nz*sizeof(double *) );
+   for( j=0 ; j<Nr*Nz ; ++j ){
+      rzZones[j] = (double *) malloc( (Nq+1)*sizeof( double ) );
+   }
+
    p_iph = (double **) malloc( Nr*sizeof( double * ) );
    for( j=0 ; j<Nr ; ++j ){
       p_iph[j] = (double *) malloc( Np[j]*sizeof( double ) );
@@ -717,11 +808,21 @@ int main(int argc, char **argv)
          }
       }
    }
+
+   loc_size[0] = 1;
+   for( j=0 ; j<Nr ; ++j ){
+      for( k=0 ; k<Nz ; ++k ){
+         int jk = j*Nz+k;
+         start[0] = Id_phi0[jk];
+         readPatch( filename , group2 , (char *)"Cells" , rzZones[jk] , H5T_NATIVE_DOUBLE , 2 , start , loc_size , glo_size );
+      }
+   }
+
+   start[1] = 0;
    loc_size[0] = 1;
    glo_size[0] = Npl;
    loc_size[1] = NpDat;
    glo_size[1] = NpDat;
-   start[1] = 0;
    for( p=0 ; p<Npl ; ++p ){
       start[0] = p;
       double thisPlanet[6];
@@ -748,6 +849,7 @@ int main(int argc, char **argv)
    }
 
    r_jph++;
+   z_kph++;
 
    //double RR = r_iph[0][Nr[0]-1];
    //double r_max = .98*RR;
@@ -790,6 +892,11 @@ int main(int argc, char **argv)
       }
       free( theZones[j] );
    }
+   for( j=0 ; j<Nr*Nz ; ++j ){
+      free( rzZones[j] );
+   }
+   free( rzZones );
+
    free( theZones );
    for( j=0 ; j<Nr ; ++j ){
       free( p_iph[j] );
@@ -800,6 +907,8 @@ int main(int argc, char **argv)
    free( Np );
    r_jph--;
    free( r_jph );
+   z_kph--;
+   free( z_kph );
 
    return (0);
 

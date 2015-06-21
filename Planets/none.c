@@ -3,7 +3,7 @@
 
 void setPlanetParams( struct domain * theDomain ){
 
-   theDomain->Npl = 2; 
+   theDomain->Npl = 1; 
 
 }
 

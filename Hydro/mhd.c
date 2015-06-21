@@ -21,6 +21,10 @@ void setHydroParams( struct domain * theDomain ){
    include_viscosity = theDomain->theParList.visc_flag;
 }
 
+int set_B_flag(void){
+   return(1);
+}
+
 double get_omega( double * prim ){
    return( prim[UPP] );
 }

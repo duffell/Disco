@@ -7,9 +7,10 @@ double get_dV( double * , double * );
 void cons2prim( double * , double * , double , double );
 void prim2cons( double * , double * , double , double );
 
-void boundary_trans( struct domain * theDomain , struct face * theFaces , int * nn , int dim ){
+void boundary_trans( struct domain * theDomain , int dim ){
 
    struct cell ** theCells = theDomain->theCells;
+
    int Nr = theDomain->Nr;
    int Nz = theDomain->Nz;
    int * Np = theDomain->Np;

@@ -46,9 +46,19 @@ void addFace( struct face * theFaces , int n , struct cell * cL , struct cell * 
 
 }
 
-void buildfaces( struct domain * theDomain , struct face * theFaces , int * ntj , int dim , int mode ){
- 
+void buildfaces( struct domain * theDomain , int dim , int mode ){
+  
    struct cell ** theCells = theDomain->theCells;
+   struct face * theFaces;
+   int * ntj;
+   if( dim==1 ){
+      theFaces = theDomain->theFaces_1;
+      ntj = theDomain->fIndex_r;
+   }else{
+      theFaces = theDomain->theFaces_2;
+      ntj = theDomain->fIndex_z;
+   }
+
    int Nr = theDomain->Nr;
    int Nz = theDomain->Nz;
    int * Np = theDomain->Np;

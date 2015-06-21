@@ -12,13 +12,6 @@ void calc_prim( struct domain * );
 
 void read_par_file( struct domain * );
  
-void setICparams( struct domain * );
-void setHydroParams( struct domain * );
-void setGeometryParams( struct domain * );
-void setRiemannParams( struct domain * );
-void setDiskParams( struct domain * );
-void setHlldParams( struct domain * );
-
 int  set_B_flag( void );
 void set_B_fields( struct domain * );
 
@@ -44,14 +37,7 @@ int main( int argc , char * argv[] ){
 
    setupGrid( &theDomain );   
    setupDomain( &theDomain );
-
-   setICparams( &theDomain );
-   setHydroParams( &theDomain );
-   setHlldParams( &theDomain );
-   setGeometryParams( &theDomain );
-   setRiemannParams( &theDomain );
-   setDiskParams( &theDomain );
-
+ 
    setupCells( &theDomain );
 /*
    if( theDomain.theParList.Initial_Regrid && !(theDomain.theParList.restart_flag) ) regrid( &theDomain );

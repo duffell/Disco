@@ -154,6 +154,7 @@ void output( struct domain * theDomain , char * filestart ){
       fdims2[1] = Nz_Tot;
       createDataset(filename,"Grid","Index",2,fdims2,H5T_NATIVE_INT);
       createDataset(filename,"Grid","Np",2,fdims2,H5T_NATIVE_INT);
+      createDataset(filename,"Grid","Id_phi0",2,fdims2,H5T_NATIVE_INT);
 
       createGroup(filename,"Data");
 
@@ -184,91 +185,125 @@ void output( struct domain * theDomain , char * filestart ){
       writeSimple(filename,"Data","Planets",PlanetData,H5T_NATIVE_DOUBLE);
    }
 
+   int jSize = jmax-jmin;
+   int kSize = kmax-kmin;
    int nrk;
-   int j0 = 0;
+   int j0,k0;
    int jSum = 0;
-   int k0 = 0;
-   int kSum = 0;
-   for( nrk=0 ; nrk < size ; ++nrk ){
-      if( nrk == rank ){
+   for( nrk=0 ; nrk < dim_size[0] ; ++nrk ){
+      if( nrk == dim_rank[0] ){
          j0 = jSum;
-         k0 = kSum;
-         jSum += jmax-jmin;
-         kSum += kmax-kmin;
-      }else{ jSum=0 ; kSum = 0; }
-      MPI_Allreduce( MPI_IN_PLACE , &jSum , 1 , MPI_INT , MPI_SUM , theDomain->theComm );
-      MPI_Allreduce( MPI_IN_PLACE , &kSum , 1 , MPI_INT , MPI_SUM , theDomain->theComm );
+         if( dim_rank[1] == 0 ) jSum += jSize;
+      }
+      MPI_Allreduce( MPI_IN_PLACE , &jSum , 1 , MPI_INT , MPI_MAX , theDomain->theComm );
    }
+   int kSum = 0;
+   for( nrk=0 ; nrk < dim_size[1] ; ++nrk ){
+      if( nrk == dim_rank[1] ){
+         k0 = kSum;
+         if( dim_rank[0] == 0 ) kSum += kSize;
+      }
+      MPI_Allreduce( MPI_IN_PLACE , &kSum , 1 , MPI_INT , MPI_MAX , theDomain->theComm );
+   }
+
+
    if( Nr_Tot == 1 ){ j0 = 0; jSum = 1; }
    if( Nz_Tot == 1 ){ k0 = 0; kSum = 1; }
-   int myIndex=0;
-   for( nrk=0 ; nrk < size ; ++nrk ){
-   if( rank==nrk ){
-      int jSize = jmax-jmin;
-      int kSize = kmax-kmin;
-      int Index[jSize*kSize];
-      int Size[jSize*kSize];
-      double * Qwrite = (double *) malloc( myNtot*Ndoub*sizeof(double) );
-      int index = 0;
-      for( k=kmin ; k<kmax ; ++k ){
-         for( j=jmin ; j<jmax ; ++j ){
-            int jk = (j-jmin) + Nr*(k-kmin);
-            Index[jk] = index + myIndex;
-            Size[jk]  = Np[j+Nr*k];
-            int i;
-            for( i=0 ; i<Np[j+Nr*k] ; ++i ){
-               struct cell * c = &(theCells[j+Nr*k][i]);
-               Cell2Doub( c , Qwrite+index*Ndoub , 1 );
-               index++;
-            }
+
+
+   int * Index   = (int *) malloc( jSize*kSize*sizeof(int) );
+   int * Size    = (int *) malloc( jSize*kSize*sizeof(int) );
+   int * Id_phi0 = (int *) malloc( jSize*kSize*sizeof(int) );
+   double * Qwrite = (double *) malloc( myNtot*Ndoub*sizeof(double) );
+
+
+   int index = 0;
+   for( k=kmin ; k<kmax ; ++k ){
+      for( j=jmin ; j<jmax ; ++j ){
+         int jk = (j-jmin)*kSize + (k-kmin);
+         Index[jk] = index;
+         Size[jk] = Np[j+Nr*k];
+ 
+         double phi0 = M_PI;
+         int Id = 0;
+         int i;
+         for( i=0 ; i<Np[j+Nr*k] ; ++i ){
+            struct cell * c = &(theCells[j+Nr*k][i]);
+            Cell2Doub( c , Qwrite+index*Ndoub , 1 );
+            double phi = c->piph-.5*c->dphi;
+            if( cos(phi0) < cos(phi) ){ phi0 = phi; Id = index; }
+            ++index;
          }
-      }
-      //Write Cell Data
-      int start2[2]    = {myIndex,0};
-      int loc_size2[2] = {myNtot,Ndoub};
-      int glo_size2[2] = {Ntot,Ndoub};
-      writePatch( filename , "Data" , "Cells" , Qwrite , H5T_NATIVE_DOUBLE , 2 , start2 , loc_size2 , glo_size2 );
-      free(Qwrite);
-      //Write Indices and Sizes for each radial track
-      start2[0] = j0;
-      start2[1] = k0;
-      loc_size2[0] = jSize;
-      loc_size2[1] = kSize;
-      glo_size2[0] = Nr_Tot;
-      glo_size2[1] = Nz_Tot;
-      writePatch( filename , "Grid" , "Index" , Index , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
-      writePatch( filename , "Grid" , "Np"    , Size  , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
-      //Write 1D Radial Data
-      if( dim_rank[1] == 0 ){
-         int offset = Ng;
-         if( dim_rank[0] == 0 ) offset = 0;
-         int start1[1]    = {j0};
-         int loc_size1[1] = {jSize};
-         if( dim_rank[0] == dim_size[0]-1 ) loc_size1[0]++;
-         int glo_size1[1] = {Nr_Tot+1};
-         writePatch( filename , "Grid" , "r_jph" , r_jph-1+offset , H5T_NATIVE_DOUBLE , 1 , start1 , loc_size1 , glo_size1 );
-         int start2[2] = {start1[0],0};
-         int loc_size2[2] = {loc_size1[0],Ntools};
-         int glo_size2[2] = {glo_size1[0],Ntools};
-         double * Q = theDomain->theTools.Qr;
-         writePatch( filename , "Data" , "Radial_Diagnostics" , Q + offset*Ntools , H5T_NATIVE_DOUBLE , 2 , start2 , loc_size2 , glo_size2 );
-      }
-      //Write 1D Vertical Data
-      if( dim_rank[0] == 0 ){
-         int offset = Ng;
-         if( dim_rank[1] == 0 ) offset = 0;
-         int start1[1]    = {k0};
-         int loc_size1[1] = {kSize};
-         if( dim_rank[1] == dim_size[1]-1 ) loc_size1[0]++;
-         int glo_size1[1] = {Nz_Tot+1};
-         writePatch( filename , "Grid" , "z_kph" , z_kph-1+offset , H5T_NATIVE_DOUBLE , 1 , start1 , loc_size1 , glo_size1 );
+         Id_phi0[jk] = Id;
       }
    }
-      myIndex += myNtot;
-      MPI_Bcast( &myIndex , 1 , MPI_INT , nrk , theDomain->theComm );
+
+   int runningTot = 0;
+   for( nrk=0 ; nrk < size ; ++nrk ){
+      int thisTot = myNtot;
+      MPI_Bcast( &thisTot , 1 , MPI_INT , nrk , theDomain->theComm );
+      if( rank > nrk ) runningTot += thisTot;
+   }
+
+   int jk;
+   for( jk=0 ; jk<jSize*kSize ; ++jk ){
+      Index[jk] += runningTot;
+      Id_phi0[jk] += runningTot;
+   }
+
+   for( nrk=0 ; nrk < size ; ++nrk ){
+      if( rank==nrk ){      
+         //Write Cell Data
+         int start2[2]    = {runningTot,0};
+         int loc_size2[2] = {myNtot,Ndoub};
+         int glo_size2[2] = {Ntot,Ndoub};
+         writePatch( filename , "Data" , "Cells" , Qwrite , H5T_NATIVE_DOUBLE , 2 , start2 , loc_size2 , glo_size2 );
+         //Write Indices and Sizes for each radial track
+         start2[0] = j0;
+         start2[1] = k0;
+         loc_size2[0] = jSize;
+         loc_size2[1] = kSize;
+         glo_size2[0] = Nr_Tot;
+         glo_size2[1] = Nz_Tot;
+         writePatch( filename , "Grid" , "Index"   , Index   , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
+         writePatch( filename , "Grid" , "Np"      , Size    , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
+         writePatch( filename , "Grid" , "Id_phi0" , Id_phi0 , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
+         //Write 1D Radial Data
+         if( dim_rank[1] == 0 ){
+            int offset = Ng;
+            if( dim_rank[0] == 0 ) offset = 0;
+            int start1[1]    = {j0};
+            int loc_size1[1] = {jSize};
+            if( dim_rank[0] == dim_size[0]-1 ) loc_size1[0]++;
+            int glo_size1[1] = {Nr_Tot+1};
+            writePatch( filename , "Grid" , "r_jph" , r_jph-1+offset , H5T_NATIVE_DOUBLE , 1 , start1 , loc_size1 , glo_size1 );
+            int start2[2] = {j0,0};
+            int loc_size2[2] = {jSize,Ntools};
+            int glo_size2[2] = {Nr_Tot,Ntools};
+            double * Q = theDomain->theTools.Qr;
+            writePatch( filename , "Data" , "Radial_Diagnostics" , Q + offset*Ntools , H5T_NATIVE_DOUBLE , 2 , start2 , loc_size2 , glo_size2 );
+         }
+         //Write 1D Vertical Data
+         if( dim_rank[0] == 0 ){
+            int offset = Ng;
+            if( dim_rank[1] == 0 ) offset = 0;
+//            if( Z_Periodic ) offset += Ng;
+            int start1[1]    = {k0};
+            int loc_size1[1] = {kSize};
+            if( dim_rank[1] == dim_size[1]-1 ) loc_size1[0]++;
+            int glo_size1[1] = {Nz_Tot+1};
+            writePatch( filename , "Grid" , "z_kph" , z_kph-1+offset , H5T_NATIVE_DOUBLE , 1 , start1 , loc_size1 , glo_size1 );
+         }
+      }
+      MPI_Barrier( theDomain->theComm );
    }
    zero_diagnostics( theDomain );
 
+   free(Index);
+   free(Size);
+   free(Id_phi0);
+   free(Qwrite);
+   MPI_Barrier(theDomain->theComm);
 }
 
 
