@@ -57,29 +57,48 @@ void set_B_fields( struct domain * theDomain ){
       }
    }
 
+   if( NUM_FACES==5 && theDomain->Nz > 1 ){
+      int NRZ2 = theDomain->N_ftracks_z;
+      setup_faces( theDomain , 2 );
+      for( n=0 ; n<theDomain->fIndex_r[NRZ2] ; ++n ){
+         struct face * f = theDomain->theFaces_2 + n; 
+         double prim[NUM_Q];
+         initial( prim , f->cm );
+         double Phi = 0.0; 
+         if( NUM_Q > BZZ ) Phi = prim[BZZ]*f->dA;
+         if( f->LRtype == 0 ){ 
+            f->L->Phi[4] = Phi; 
+         }else{
+            f->R->Phi[3] = Phi; 
+         }    
+      }
+   }
+
    B_faces_to_cells( theDomain , 0 );
    B_faces_to_cells( theDomain , 1 );
  
    free( theDomain->theFaces_1 );
+   if( theDomain->theFaces_2 ) free( theDomain->theFaces_2 );
 
 }
 
 void B_faces_to_cells( struct domain * theDomain , int type ){
 
-   struct cell ** theCells = theDomain->theCells;
-   struct face * theFaces_1 = theDomain->theFaces_1;
+   if( NUM_Q > BZZ ){
+      struct cell ** theCells = theDomain->theCells;
+      struct face * theFaces_1 = theDomain->theFaces_1;
+      struct face * theFaces_2 = theDomain->theFaces_2;
    
-   int Nr = theDomain->Nr;
-   int Nz = theDomain->Nz;
-   int * Np = theDomain->Np;
-   double * r_jph = theDomain->r_jph;
-   double * z_kph = theDomain->z_kph;
+      int Nr = theDomain->Nr;
+      int Nz = theDomain->Nz;
+      int * Np = theDomain->Np;
+      double * r_jph = theDomain->r_jph;
+      double * z_kph = theDomain->z_kph;
 
-   int Nf = theDomain->fIndex_r[theDomain->N_ftracks_r];  
+      int Nf = theDomain->fIndex_r[theDomain->N_ftracks_r];  
  
-   int i,j,k;
+      int i,j,k;
 
-   if( NUM_Q > BPP ){
       for( j=0 ; j<Nr ; ++j ){
          for( k=0 ; k<Nz ; ++k ){
             int jk = j+Nr*k;
@@ -89,39 +108,39 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
                if( type==0 ){
                   c->prim[BRR] = 0.0;
                   c->prim[BPP] = 0.0;
+                  if( NUM_FACES==5 ) c->prim[BZZ] = 0.0;
                }else{
                   c->cons[BRR] = 0.0;
                   c->cons[BPP] = 0.0;
+                  if( NUM_FACES==5 ) c->cons[BZZ] = 0.0;
                }
             }
          }
       }   
-   }
 
-   int n;
-   for( n=0 ; n<Nf ; ++n ){
-      struct face * f = theFaces_1 + n;
-      struct cell * cL = f->L;
-      struct cell * cR = f->R;
-      double Phi;
-      if( f->LRtype==0 ){
-         Phi = cL->Phi[2];
-      }else{
-         Phi = cR->Phi[1];
+      int n;
+      for( n=0 ; n<Nf ; ++n ){
+         struct face * f = theFaces_1 + n;
+         struct cell * cL = f->L;
+         struct cell * cR = f->R;
+         double Phi;
+         if( f->LRtype==0 ){
+            Phi = cL->Phi[2];
+         }else{
+            Phi = cR->Phi[1];
+         }
+         cL->tempDoub += f->dA;
+         cR->tempDoub += f->dA;
+
+         if( type==0 ){
+            cL->prim[BRR] += Phi;
+            cR->prim[BRR] += Phi;
+         }else{
+            cL->cons[BRR] += Phi;
+            cR->cons[BRR] += Phi;
+         }
       }
-      cL->tempDoub += f->dA;
-      cR->tempDoub += f->dA;
 
-      if( type==0 ){
-         cL->prim[BRR] += Phi;
-         cR->prim[BRR] += Phi;
-      }else{
-         cL->cons[BRR] += Phi;
-         cR->cons[BRR] += Phi;
-      }
-   }
-
-   if( NUM_Q > BPP ){ 
       for( j=0 ; j<Nr ; ++j ){
          for( k=0 ; k<Nz ; ++k ){
             int jk = j+Nr*k;
@@ -148,10 +167,67 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
             }
          }
       }
-   }
 
+      if( NUM_FACES == 5 ){
+         for( j=0 ; j<Nr ; ++j ){
+            for( k=0 ; k<Nz ; ++k ){
+               int jk = j+Nr*k;
+               for( i=0 ; i<Np[jk] ; ++i ){
+                  theCells[jk][i].tempDoub = 0.0;
+               }
+            }
+         }
+
+         int Nfz = theDomain->fIndex_z[theDomain->N_ftracks_z];  
+         for( n=0 ; n<Nfz ; ++n ){
+            struct face * f = theFaces_2 + n;
+            struct cell * cL = f->L;
+            struct cell * cR = f->R;
+            double Phi;
+            if( f->LRtype==0 ){
+               Phi = cL->Phi[4];
+            }else{
+               Phi = cR->Phi[3];
+            }
+            cL->tempDoub += f->dA;
+            cR->tempDoub += f->dA;
+
+            if( type==0 ){
+               cL->prim[BZZ] += Phi;
+               cR->prim[BZZ] += Phi;
+            }else{
+               cL->cons[BZZ] += Phi;
+               cR->cons[BZZ] += Phi;
+            }
+         }
+
+         for( j=0 ; j<Nr ; ++j ){
+            for( k=0 ; k<Nz ; ++k ){
+               int jk = j+Nr*k;
+               for( i=0 ; i<Np[jk] ; ++i ){
+                  int im = i-1; 
+                  if( im==-1 ) im = Np[jk]-1;
+
+                  struct cell * c = &(theCells[jk][i]);
+                  struct cell * cm = &(theCells[jk][im]);
+
+                  double xp[3] = { r_jph[j]   , c->piph  , z_kph[k]   };   
+                  double xm[3] = { r_jph[j-1] , cm->piph , z_kph[k-1] };
+                  double dV = get_dV( xp , xm );
+
+                  if( type==0 ){
+                     c->prim[BZZ] /= c->tempDoub;
+                  }else{
+                     c->cons[BZZ] *= dV/c->tempDoub;
+                  }    
+               }    
+            }    
+         }  
+      }
+   }
 }
 
+/////////////////////HERE IS WHERE I GOT TO LAST....
 
 void update_B_fluxes( struct domain * theDomain , double dt ){
 

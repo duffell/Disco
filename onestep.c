@@ -53,7 +53,7 @@ void onestep( struct domain * theDomain , double RK , double dt , int first_step
       trans_flux( theDomain , dt , 2 );
    }
 
-   if( bflag ){
+   if( bflag && NUM_EDGES >= 4 ){
       avg_Efields( theDomain );
       subtract_advective_B_fluxes( theDomain );
       update_B_fluxes( theDomain , dt );

@@ -8,8 +8,8 @@ void initial( double * prim , double * x ){
    double r   = x[0];
    double phi = x[1];
    double z   = x[2];
-   double xx = r*cos(phi);
-   double yy = r*sin(phi);//-.5;
+   double xx = r*cos(phi)-.5;
+   double yy = r*sin(phi);
    double R2 = xx*xx + yy*yy + z*z;
   // double xx = r*cos(phi);
   // double yy = r*sin(phi)-.5;

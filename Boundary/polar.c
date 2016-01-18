@@ -53,7 +53,7 @@ void boundary_trans( struct domain * theDomain , int dim ){
    if( dim==2 && dim_rank[1] == dim_size[1]-1 ){ 
       int i,j,k;
       for( k=Nz-1 ; k>Nz-1-Ng ; --k ){
-         for( j=0 ; j>Nr ; ++j ){
+         for( j=0 ; j<Nr ; ++j ){
             int jk = j+Nr*k;
             for( i=0 ; i<Np[jk] ; ++i ){
                struct cell * c = &(theCells[jk][i]);

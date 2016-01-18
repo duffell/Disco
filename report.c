@@ -43,11 +43,17 @@ void report( struct domain * theDomain ){
    double Power  = 0.0;
    double Torque = 0.0;
    double Torque2 = 0.0;
+   double Fr=0.0;
    double PsiR = 0.0;
    double PsiI = 0.0;
    double Vol = 0.0;
    double rho_min = HUGE_VAL;
    double rhoavg_min = HUGE_VAL;
+   double Mass = 0.0;
+   double Mdot = 0.0;
+
+   double S_R = 0.0;
+   double S_0 = 0.0;
 
    //double T_cut[10];
    //double P_cut[10];
@@ -78,11 +84,16 @@ void report( struct domain * theDomain ){
             L1_isen += fabs(Pp/pow(rho,5./3.)-1.)*dV;
             L1_rho  += fabs(rho/rho0-1.)*dV;
             L1_P    += fabs(Pp/pow(rho,5./3.)/0.01-1.)*dV;
+            Mdot += 2.*M_PI*r*rho*dV*c->prim[URR];
             Vol += dV;
 
             if( rho_min > rho/rho0 ) rho_min = rho/rho0;
             rho_avg += rho*dV;
             Vol_avg += dV;
+            Mass += rho*dV;
+
+            S_R += pow(rho,4.)*r*dV;
+            S_0 += pow(rho,4.)*dV;
 
             if( Npl > 1 ){
                double fr,fp,fz,fp2;
@@ -104,6 +115,8 @@ void report( struct domain * theDomain ){
                Torque -= (rho-1.0)*rp*fp*dV;
                Power  -= (rho-1.0)*( rp*om*fp + vr*fr )*dV;
                Torque2 -= (rho-1.0)*rp*fp2*dV;
+               Fr -= (rho-1.0)*fr*dV;
+
 /*
                int n_cut;
                for( n_cut=0 ; n_cut<10 ; ++n_cut ){
@@ -129,10 +142,15 @@ void report( struct domain * theDomain ){
    MPI_Allreduce( MPI_IN_PLACE , &Torque  , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &Torque2 , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &Power   , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Fr      , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &PsiR    , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &PsiI    , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &rho_min    , 1 , MPI_DOUBLE , MPI_MIN , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &rhoavg_min , 1 , MPI_DOUBLE , MPI_MIN , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Mass    , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &S_R     , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &S_0     , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Mdot    , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
 
 //   MPI_Allreduce( MPI_IN_PLACE , T_cut  , 10 , MPI_DOUBLE , MPI_SUM , grid_comm );
 //   MPI_Allreduce( MPI_IN_PLACE , P_cut  , 10 , MPI_DOUBLE , MPI_SUM , grid_comm );
@@ -140,10 +158,12 @@ void report( struct domain * theDomain ){
    L1_isen /= Vol;
    L1_rho  /= Vol;
    L1_P    /= Vol;
+   Mdot /= Vol;
+   S_R /= S_0;
 
    if( rank==0 ){
       FILE * rFile = fopen("report.dat","a");
-      fprintf(rFile,"%e %e %e %e %e %e %e %e %e\n",t,Torque,Power,r_p,rho_min,rhoavg_min,PsiR,PsiI,Torque2);
+      fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e\n",t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R);
       //fprintf(rFile,"%e %e %e ",t,Torque,Power);
       //for( j=0 ; j<10 ; ++j ) fprintf(rFile,"%e %e ",T_cut[j],P_cut[j]);
       //fprintf(rFile,"\n");

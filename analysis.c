@@ -2,7 +2,7 @@
 #include "paul.h"
 
 int num_diagnostics(void){
-   return(4);
+   return(5);
 }
 
 void planetaryForce( struct planet * , double , double , double , double * , double * , double * , int );
@@ -25,6 +25,7 @@ void get_diagnostics( double * x , double * prim , double * Q , struct domain * 
    }
    Q[2] = 2.*M_PI*r*rho*(r*Fp);
    Q[3] = 2.*M_PI*r*rho*( r*r*omega*vr );
+   Q[4] = omega;
 }
 
 void zero_diagnostics( struct domain * theDomain ){

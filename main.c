@@ -45,7 +45,7 @@ int main( int argc , char * argv[] ){
    if( theDomain.Nr > 1 ) exchangeData( &theDomain , 0 );
    if( theDomain.Nz > 1 ) exchangeData( &theDomain , 1 );
 
-   if( set_B_flag() ) set_B_fields( &theDomain );
+   if( set_B_flag() && NUM_FACES >= 3 ) set_B_fields( &theDomain );
 
    if( theDomain.rank==0 && !(theDomain.theParList.restart_flag) ){
       FILE * rFile = fopen("report.dat","w");

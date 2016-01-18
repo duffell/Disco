@@ -61,7 +61,9 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
       cR->B[2] = .5*B;
       cR->B[3] = .5*B;
    }
+   if( NUM_EDGES == 12 ){
 
+   }
 }
 
 void riemann_trans( struct face * F , double dt , int dim ){

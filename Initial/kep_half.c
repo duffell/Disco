@@ -16,26 +16,27 @@ double get_cs2( double );
 void initial( double * prim , double * x ){
 
    double r = x[0];
-   double z = x[2];
 
-   double sint = z/sqrt(r*r+z*z);
+   double xx = r*cos(x[1]);
+   double yy = r*sin(x[1]);
+   double sc_r2 = (xx-.5)*(xx-.5) + yy*yy;
+
+   double k = 0.5;
+
+   double rho = 1.0/pow(r,k) ;//+ 1.*exp(-20.*sc_r2);
    double cs2 = get_cs2( r );
+   double Pp = rho*cs2/gam;
+   double omega02 = 0.5/pow(r,3.) ;//+.5-.5/pow(1.-r,3.);
+   double omegaP2 = omega02*( (1.+k)/Mach/Mach );
 
-   double rho = 1.0*exp(-sint*sint*Mach*Mach);
-   double Pp  = rho*cs2/gam;
-   //double n = 1.5;
-   //double omega = ( pow( r , n-1.5 ) + 1. )/( pow( r , n ) + 1. );
-   //double omega = 1./pow( pow( r , 1.5*n ) + 0.3 , 1./n );
-   double omega2  = pow( r , -3. );
-   double omega2P = cs2/r/r;
-   double omega = sqrt( omega2 - omega2P );
+   double omega = sqrt( omega02 - omegaP2 );
 
    double X = 0.0; 
-   if( r > 1.0 ) X = 1.0; 
+   if( r > 0.45 ) X = 1.0;
 
    prim[RHO] = rho;
    prim[PPP] = Pp;
-   prim[URR] = 0.0;//-1.5*nu/r;
+   prim[URR] = -1.5*nu/r;
    prim[UPP] = omega;
    prim[UZZ] = 0.0;
    if( NUM_N>0 ) prim[NUM_C] = X;

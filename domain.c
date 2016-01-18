@@ -14,6 +14,7 @@ void setRiemannParams( struct domain * );
 void setPlanetParams( struct domain * );
 void setHlldParams( struct domain * );
 void setDiskParams( struct domain * );
+void setOmegaParams( struct domain * );
 
 int get_num_rzFaces( int , int , int );
 
@@ -65,7 +66,8 @@ void setupDomain( struct domain * theDomain ){
    theDomain->N_chk = theDomain->theParList.NumChecks;
 
    theDomain->count_steps = 0;
-   theDomain->final_step = 0;
+   theDomain->final_step  = 0;
+   theDomain->check_plz   = 0;
 
    theDomain->nrpt=-1;
    theDomain->nsnp=-1;
@@ -85,6 +87,7 @@ void setupDomain( struct domain * theDomain ){
    setRiemannParams( theDomain );
    setHlldParams( theDomain );
    setDiskParams( theDomain );
+   setOmegaParams( theDomain );
 
 }
 
@@ -96,6 +99,7 @@ void calc_dp( struct domain * );
 void set_wcell( struct domain * );
 void adjust_gas( struct planet * , double * , double * , double );
 void set_B_fields( struct domain * );
+void subtract_omega( double * );
 
 void setupCells( struct domain * theDomain ){
 
@@ -128,7 +132,8 @@ void setupCells( struct domain * theDomain ){
             double dV = get_dV( xp , xm );
             double phi = c->piph-.5*c->dphi;
             double x[3] = { r , phi , .5*(z_kph[k]+z_kph[k-1])};
-            if( !restart_flag ) initial( c->prim , x ); 
+            if( !restart_flag ) initial( c->prim , x );
+            subtract_omega( c->prim ); 
             if( atmos ){
                int p;
                for( p=0 ; p<Npl ; ++p ){
@@ -190,6 +195,7 @@ void check_dt( struct domain * theDomain , double * dt ){
    double t = theDomain->t;
    double tmax = theDomain->t_fin;
    int final=0;
+   int check=0;
    if( t + *dt > tmax ){
       *dt = tmax-t;
       final=1;
@@ -199,10 +205,15 @@ void check_dt( struct domain * theDomain , double * dt ){
       FILE * abort = NULL;
       abort = fopen("abort","r");
       if( abort ){ final = 1; fclose(abort); }
+      FILE * latest = NULL;
+      latest = fopen("latest","r");
+      if( latest ){ check = 1; fclose(latest); remove("latest");}
    }
 
    MPI_Allreduce( MPI_IN_PLACE , &final , 1 , MPI_INT , MPI_SUM , theDomain->theComm );
+   MPI_Allreduce( MPI_IN_PLACE , &check , 1 , MPI_INT , MPI_SUM , theDomain->theComm );
    if( final ) theDomain->final_step = 1;
+   if( check ) theDomain->check_plz = 1;
 
 }
 
@@ -231,12 +242,18 @@ void possiblyOutput( struct domain * theDomain , int override ){
    }
    n0 = (int)( t*Nchk/t_fin );
    if( LogOut ) n0 = (int)( Nchk*log(t/t_min)/log(t_fin/t_min) );
-   if( (theDomain->nchk < n0 && Nchk>0) || override ){
+   if( (theDomain->nchk < n0 && Nchk>0) || override || theDomain->check_plz ){
       theDomain->nchk = n0;
       char filename[256];
       if( !override ){
-         if(theDomain->rank==0) printf("Creating Checkpoint #%04d...\n",n0);
-         sprintf(filename,"checkpoint_%04d",n0);
+         if( !theDomain->check_plz ){
+            if(theDomain->rank==0) printf("Creating Checkpoint #%04d...\n",n0);
+            sprintf(filename,"checkpoint_%04d",n0);
+         }else{
+            if(theDomain->rank==0) printf("Creating Requested Checkpoint...\n");
+            sprintf(filename,"checkpoint_latest");
+            theDomain->check_plz = 0;
+         }
          output( theDomain , filename );
       }else{
          if(theDomain->rank==0) printf("Creating Final Checkpoint...\n");
