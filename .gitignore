@@ -1,0 +1,14 @@
+# Application
+disco
+
+# User files
+Makefile.in
+
+# Output files
+*.dat
+*.h5
+*.log
+
+# Build/editor files
+*.o
+*.swp

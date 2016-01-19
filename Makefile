@@ -1,18 +1,5 @@
-
-INITIAL  = bx3d
-HYDRO    = mhd
-BOUNDARY = polar
-OUTPUT   = h5out
-RESTART  = h5in
-PLANETS  = none
-
-UNAME = $(shell uname)
-ifeq ($(UNAME),Linux)
-H55 = /home/install/app/hdf5
-endif
-ifeq ($(UNAME),Darwin)
-H55 = /opt/local
-endif
+MAKEFILE_IN = $(PWD)/Makefile.in
+include $(MAKEFILE_IN)
 
 CC = mpicc
 FLAGS = -O3 -Wall -g
