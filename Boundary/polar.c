@@ -4,8 +4,8 @@
 
 void initial( double * , double * );
 double get_dV( double * , double * );
-void cons2prim( double * , double * , double , double );
-void prim2cons( double * , double * , double , double );
+void cons2prim( double * , double * , double * , double );
+void prim2cons( double * , double * , double * , double );
 
 void boundary_trans( struct domain * theDomain , int dim ){
 

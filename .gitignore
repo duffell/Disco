@@ -9,6 +9,9 @@ Makefile.in
 *.h5
 *.log
 
+# Viewer files
+Viewer/vdisco
+
 # Build/editor files
 *.o
 *.swp

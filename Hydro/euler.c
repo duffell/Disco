@@ -33,8 +33,9 @@ double get_omega( double * prim ){
 
 void planetaryForce( struct planet * , int , double , double , double * , double * );
 
-void prim2cons( double * prim , double * cons , double r , double dV ){
+void prim2cons( double * prim , double * cons , double * x , double dV ){
 
+   double r = x[0];
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[URR];
@@ -59,8 +60,9 @@ void prim2cons( double * prim , double * cons , double r , double dV ){
    }
 }
 
-void getUstar( double * prim , double * Ustar , double r , double Sk , double Ss , double * n , double * Bpack ){
+void getUstar( double * prim , double * Ustar , double * x , double Sk , double Ss , double * n , double * Bpack ){
 
+   double r = x[0];
    double rho = prim[RHO];
    double vr  = prim[URR];
    double vp  = prim[UPP]*r;
@@ -95,8 +97,9 @@ void getUstar( double * prim , double * Ustar , double r , double Sk , double Ss
 
 }
 
-void cons2prim( double * cons , double * prim , double r , double dV ){
+void cons2prim( double * cons , double * prim , double * x , double dV ){
    
+   double r = x[0];
    double rho = cons[DDD]/dV;
    if( rho < RHO_FLOOR )   rho = RHO_FLOOR;
    double Sr  = cons[SRR]/dV;
@@ -133,8 +136,9 @@ void cons2prim( double * cons , double * prim , double r , double dV ){
 
 }
 
-void flux( double * prim , double * flux , double r , double * n ){
+void flux( double * prim , double * flux , double * x , double * n ){
    
+   double r = x[0];
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[URR];
@@ -193,8 +197,9 @@ void source( double * prim , double * cons , double * xp , double * xm , double 
 
 }
 
-void visc_flux( double * prim , double * gprim , double * flux , double r , double * n ){
+void visc_flux( double * prim , double * gprim , double * flux , double * x , double * n ){
 
+   double r = x[0];
    double nu = explicit_viscosity;
 
    if( alpha_flag ){
@@ -221,8 +226,9 @@ void visc_flux( double * prim , double * gprim , double * flux , double r , doub
 
 }
 
-void vel( double * prim1 , double * prim2 , double * Sl , double * Sr , double * Ss , double * n , double r , double * Bpack ){
+void vel( double * prim1 , double * prim2 , double * Sl , double * Sr , double * Ss , double * n , double * x , double * Bpack ){
 
+   double r = x[0];
    double P1   = prim1[PPP];
    double rho1 = prim1[RHO];
    double vn1  = prim1[URR]*n[0] + prim1[UPP]*n[1]*r + prim1[UZZ]*n[2];
@@ -273,8 +279,9 @@ double mindt(double * prim , double w , double * xp , double * xm ){
 
 }
 
-double getReynolds( double * prim , double w , double r , double dx ){
+double getReynolds( double * prim , double w , double * x , double dx ){
 
+   double r = x[0];
    double nu = explicit_viscosity;
 
    double vr = prim[URR];

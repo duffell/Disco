@@ -74,8 +74,8 @@ double getmindt( struct domain * theDomain ){
 }
 
 void initial( double * , double * );
-void prim2cons( double * , double * , double , double );
-void cons2prim( double * , double * , double , double );
+void prim2cons( double * , double * , double * , double );
+void cons2prim( double * , double * , double * , double );
 void restart( struct domain * );
 /*
 void clear_w( struct domain * theDomain ){
@@ -293,14 +293,15 @@ void calc_prim( struct domain * theDomain ){
             double xm[3] = {rm,phim,z_kph[k-1]};
             double r = get_moment_arm( xp , xm );
             double dV = get_dV( xp , xm );
-            cons2prim( c->cons , c->prim , r , dV );
+            double x[3] = {r, 0.5*(phim+phip), 0.5*(z_kph[k]+z_kph[k-1])};
+            cons2prim( c->cons , c->prim , x , dV );
          }
       }
    }
 }
 
 void plm_phi( struct domain * );
-void riemann_phi( struct cell * , struct cell * , double , double );
+void riemann_phi( struct cell * , struct cell * , double * , double );
 
 void phi_flux( struct domain * theDomain , double dt ){
 
@@ -323,7 +324,8 @@ void phi_flux( struct domain * theDomain , double dt ){
             double xm[3] = {r_jph[j-1],phi,z_kph[k-1]};
             double r = get_moment_arm(xp,xm);
             double dA = get_dA(xp,xm,0); 
-            riemann_phi( &(cp[i]) , &(cp[ip]) , r , dA*dt );
+            double x[3] = {r, phi, 0.5*(z_kph[k-1]+z_kph[k])};
+            riemann_phi( &(cp[i]) , &(cp[ip]) , x , dA*dt );
          }
       }
    }
@@ -494,7 +496,8 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       double xm[3] = {r_jph[j-1],phim,z_kph[k-1]};
       double r  = get_moment_arm( xp , xm );
       double dV = get_dV( xp , xm );
-      cons2prim( sweep[iS].cons , sweep[iS].prim , r , dV );
+      double x[3] = {r, 0.5*(phim+phip), 0.5*(z_kph[k-1]+z_kph[k])};
+      cons2prim( sweep[iS].cons , sweep[iS].prim , x , dV );
       //Shift Memory
       int blocksize = Np[jk]-iSp-1;
       if( iSp != Np[jk]-1 ) memmove( sweep+iSp , sweep+iSp+1 , blocksize*sizeof(struct cell) );
@@ -533,13 +536,17 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       double xm[3] = {r_jph[j-1],phim,z_kph[k-1]};
       double dV = get_dV( xp , xm );
       double r  = get_moment_arm( xp , xm );
-      cons2prim( sweep[iL].cons , sweep[iL].prim , r , dV );
+      double x[3] = {r, 0.5*(phim+phip), 0.5*(z_kph[k-1]+z_kph[k])};
+      cons2prim( sweep[iL].cons , sweep[iL].prim , x , dV );
 
       xp[1] = phip;
       xm[1] = phi0;
       dV = get_dV( xp , xm );
       r  = get_moment_arm( xp , xm );
-      cons2prim( sweep[iL+1].cons , sweep[iL+1].prim , r , dV );
+      x[0] = r;
+      x[1] = 0.5*(phim+phip);
+      x[2] = 0.5*(z_kph[k-1]+z_kph[k]);
+      cons2prim( sweep[iL+1].cons , sweep[iL+1].prim , x , dV );
 
    }
 }
