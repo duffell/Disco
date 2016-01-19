@@ -12,9 +12,12 @@ enum{C_FIXED,C_WCELL,C_WRIEMANN};
 #define MOVE_CELLS C_WCELL
 
 #define NUM_C 8
-#define NUM_N 1
+#define NUM_N 0
 #define NUM_Q (NUM_C+NUM_N)
 #define NUM_G 2
+#define NUM_EDGES 0 //4 or 8
+#define NUM_FACES 0 //3 or 5
+#define NUM_AZ_EDGES 0 //0 or 4
 
 struct param_list{
 
@@ -48,6 +51,7 @@ struct param_list{
    int alpha_flag;
 
    int restart_flag;
+   int CT;
 
 };
 
@@ -59,13 +63,19 @@ struct diagnostic_avg{
 struct domain{
 
    struct cell ** theCells;
+   struct face * theFaces_1;
+   struct face * theFaces_2;
    struct planet * thePlanets;
    int * Np;
    int Nr,Nz,Ng;
+   int N_ftracks_r;
+   int N_ftracks_z;
    int Npl;
    double * r_jph;
    double * z_kph;
    double phi_max;
+   int * fIndex_r;
+   int * fIndex_z;
 
    time_t Wallt_init;
    int rank,size;
@@ -90,19 +100,28 @@ struct domain{
    int N_chk;
 
    int final_step;
+   int check_plz;
 
 };
 
 struct cell{
+
    double prim[NUM_Q];
    double cons[NUM_Q];
    double RKcons[NUM_Q];
    double grad[NUM_Q];
    double gradp[NUM_Q];
    double piph;
-   double RKpiph;
    double dphi;
    double wiph;
+
+   double E[NUM_EDGES];
+   double B[NUM_EDGES];
+   double E_phi[NUM_AZ_EDGES];
+   double    Phi[NUM_FACES];
+   double RK_Phi[NUM_FACES];
+   double tempDoub;
+
 };
 
 struct face{
@@ -113,6 +132,10 @@ struct face{
    double cm[3];
    double dphi;
    double dA;
+
+   double E,B;
+   int LRtype;
+   int flip_flag;
 };
 
 struct planet{
