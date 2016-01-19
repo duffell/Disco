@@ -1,10 +1,10 @@
 
-INITIAL  = kepler
-HYDRO    = euler
-BOUNDARY = fixed
+INITIAL  = bx3d
+HYDRO    = mhd
+BOUNDARY = polar
 OUTPUT   = h5out
 RESTART  = h5in
-PLANETS  = circular
+PLANETS  = none
 
 UNAME = $(shell uname)
 ifeq ($(UNAME),Linux)
@@ -20,7 +20,7 @@ FLAGS = -O3 -Wall -g
 INC = -I$(H55)/include
 LIB = -L$(H55)/lib -lm -lhdf5
 
-OBJ = main.o readpar.o timestep.o onestep.o riemann.o mpisetup.o gridsetup.o domain.o misc.o geometry.o faces.o exchange.o plm.o report.o profiler.o planet.o omega.o analysis.o hlld.o $(INITIAL).o $(OUTPUT).o $(HYDRO).o $(BOUNDARY).o $(RESTART).o $(PLANETS).o #snapshot.o
+OBJ = main.o readpar.o timestep.o onestep.o riemann.o mpisetup.o gridsetup.o domain.o misc.o geometry.o faces.o exchange.o plm.o report.o profiler.o planet.o omega.o analysis.o bfields.o hlld.o rotframe.o $(INITIAL).o $(OUTPUT).o $(HYDRO).o $(BOUNDARY).o $(RESTART).o $(PLANETS).o #snapshot.o
 
 default: disco
 
