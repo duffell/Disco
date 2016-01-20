@@ -9,6 +9,8 @@ BOUNDARY = fixed
 OUTPUT   = h5out
 RESTART  = h5in
 PLANETS  = circular
+METRIC   = flat_rpz
+FRAME    = normal
 
 # Location of HDF5 Library
 H55 = /opt/local

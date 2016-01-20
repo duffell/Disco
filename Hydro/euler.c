@@ -27,7 +27,7 @@ int set_B_flag(void){
    return(0);
 }
 
-double get_omega( double * prim ){
+double get_omega( double * prim , double * x ){
    return( prim[UPP] );
 }
 

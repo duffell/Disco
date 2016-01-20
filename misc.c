@@ -90,7 +90,7 @@ void clear_w( struct domain * theDomain ){
    }
 }*/
 
-double get_omega( double * );
+double get_omega( double * , double * );
 double mesh_om( double );
 
 void set_wcell( struct domain * theDomain ){
@@ -100,19 +100,39 @@ void set_wcell( struct domain * theDomain ){
    int Nz = theDomain->Nz;
    int * Np = theDomain->Np;
    double * r_jph = theDomain->r_jph;
+   double * z_kph = theDomain->z_kph;
 
    int i,j,k;
    for( j=0 ; j<Nr ; ++j ){
       for( k=0 ; k<Nz ; ++k ){
          int jk = j+Nr*k;
+         double rm = r_jph[j-1];
+         double rp = r_jph[j];
+         double zm = z_kph[k-1];
+         double zp = z_kph[k];
          for( i=0 ; i<Np[jk] ; ++i ){
             struct cell * cL = &(theCells[jk][i ]);  
             double w = 0.0;
             if( mesh_motion ){
                int ip = (i+1)%Np[jk];
+               double phip = cL->piph;
+               double phim = phip-cL->dphi;
+               double xp[3] = {rp,phip,zp};
+               double xm[3] = {rm,phim,zm};
+               double r = get_moment_arm( xp , xm );
+               double x[3] = {r, 0.5*(phim+phip), 0.5*(zm+zp)};
+               double wL = get_omega( cL->prim , x );
+
                struct cell * cR = &(theCells[jk][ip]);
-               double wL = get_omega( cL->prim );
-               double wR = get_omega( cR->prim );
+               phip = cR->piph;
+               phim = phip-cR->dphi;
+               xp[1] = phip;
+               xm[1] = phim;
+               r = get_moment_arm( xp , xm );
+               x[0] = r;
+               x[1] = 0.5*(phim+phip);
+               double wR = get_omega( cR->prim , x );
+
                w = .5*(wL + wR); 
             }
             cL->wiph = w;
