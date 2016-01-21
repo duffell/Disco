@@ -124,7 +124,7 @@ void cons2prim(double *cons, double *prim, double *x, double dV)
     int q;
     double cons1[NUM_Q];
     for(q=0; q<NUM_Q; q++)
-        cons1[NUM_Q] = cons[NUM_Q]/dV;
+        cons1[q] = cons[q]/dV;
 
     cons2prim_prep(cons1, x);
     if(isothermal)
@@ -288,13 +288,9 @@ void vel(double *prim1, double *prim2, double *Sl, double *Sr, double *Ss,
 
     double cs22 = gamma_law*P2/(rho2+gamma_law/(gamma_law-1.0)*P2);
 
-    //*Ss = ( P2 - P1 + rho1*vn1*(-cs1) - rho2*vn2*cs2 )/( rho1*(-cs1) - rho2*cs2 );
-    
-    double a, b[3], igam[9];
-    a = metric_lapse(x);
-    metric_shift(x, b);
+    double gam[9], igam[9];
+    metric_gam(x, gam);
     metric_igam(x, igam);
-    double bn = b[0]*n[0] + r*b[1]*n[1] + b[2]*n[2];
 
     int i,j;
     double u21 = 0.0;
@@ -307,57 +303,76 @@ void vel(double *prim1, double *prim2, double *Sl, double *Sr, double *Ss,
         }
     double w1 = sqrt(1.0+u21);
     double w2 = sqrt(1.0+u22);
-    double v1[3], v2[3], vn1, vn2;
+
+    double norm = 0.0;
+    double N[3] = {n[0], n[1]/r, n[2]};
     for(i=0; i<3; i++)
-    {
-        v1[i] = -b[i];
-        v2[i] = -b[i];
         for(j=0; j<3; j++)
-        {
-            v1[i] += igam[3*i+j]*l1[j]*a/w1;
-            v2[i] += igam[3*i+j]*l2[j]*a/w2;
-        }
-    }
-    vn1 = n[0]*v1[0] + r*n[1]*v1[1] + n[2]*v1[2];
-    vn2 = n[0]*v2[0] + r*n[1]*v2[1] + n[2]*v2[2];
+            norm += gam[3*i+j]*N[i]*N[j];
+    norm = sqrt(norm);
+    for(i=0; i<3; i++)
+        N[i] /= norm;
 
-    double sig1 = cs21/(w1*w1*(1.0-cs21));
-    double sig2 = cs22/(w2*w2*(1.0-cs22));
-    double dv1 = sqrt(sig1*(1.0+sig1)*a*a*igam[
+    double un1 = l1[0]*N[0] + l1[1]*N[1] + l1[2]*N[2];
+    double un2 = l2[0]*N[0] + l2[1]*N[1] + l2[2]*N[2];
 
-    double vn1 = 
+    double dv1 = sqrt(cs21*(1.0+(1.0-cs21)*(u21-un1*un1)));
+    double dv2 = sqrt(cs22*(1.0+(1.0-cs22)*(u22-un2*un2)));
 
-   *Sr =  cs1 + vn1;
-   *Sl = -cs1 + vn1;
+    double sl1 = (un1*w1*(1.0-cs21) - dv1) / (w1*w1-cs21*u21);
+    double sr1 = (un1*w1*(1.0-cs21) + dv1) / (w1*w1-cs21*u21);
+    double sl2 = (un2*w2*(1.0-cs22) - dv2) / (w2*w2-cs22*u22);
+    double sr2 = (un2*w2*(1.0-cs22) + dv2) / (w2*w2-cs22*u22);
 
-   if( *Sr <  cs2 + vn2 ) *Sr =  cs2 + vn2;
-   if( *Sl > -cs2 + vn2 ) *Sl = -cs2 + vn2;
+    *Sr = sr1 > sr2 ? sr1 : sr2;
+    *Sl = sl1 < sl2 ? sl1 : sl2;
 
+    //TODO: USE REAL HLLC SPEED THIS IS WRONG
+    *Ss = 0.5*(*Sl + *Sr);
 }
 
-double mindt(double *prim, double w, double *xp, double *xm)
+double mindt(double *prim, double wf, double *xp, double *xm)
 {
-   double r = .5*(xp[0]+xm[0]);
-   double Pp  = prim[PPP];
-   double rho = prim[RHO];
-   double vp  = (prim[UPP]-w)*r;
-   double vr  = prim[URR];
-   double vz  = prim[UZZ];
-   double cs  = sqrt(gamma_law*Pp/rho);
+    double x[3] = {0.5*(xm[0]+xp[0]), 0.5*(xm[1]+xp[1]), 0.5*(xm[2]+xp[2])};
+    double r = x[0];
+    double rho = prim[RHO];
+    double Pp  = prim[PPP];
+    double l[3] = {prim[URR], prim[UPP], prim[UZZ]};
+    double cs  = sqrt(gamma_law*Pp/(rho+gamma_law/(gamma_law-1)*Pp));
 
-   double maxvr = cs + fabs(vr);
-   double maxvp = cs + fabs(vp);
-   double maxvz = cs + fabs(vz);
+    double gam[9], igam[9];
+    metric_gam(x, gam);
+    metric_igam(x, igam);
 
-   double dtr = get_dL(xp,xm,0)/maxvr;
-   double dtp = get_dL(xp,xm,1)/maxvp;
-   double dtz = get_dL(xp,xm,2)/maxvz;
-   
-   double dt = dtr;
-   if( dt > dtp ) dt = dtp;
-   if( dt > dtz ) dt = dtz;
+    int i,j;
+    double u2 = 0.0;
+    for(i=0; i<3; i++)
+        for(j=0; j<3; j++)
+            u2 += igam[3*i+j]*l[i]*l[j];
+    double w = sqrt(1.0+u2);
 
-   return( dt );
+    double sig = 1.0 - cs*cs;
+    double ur = fabs(l[0]/sqrt(gam[0]));
+    double up = l[1]/sqrt(gam[3*1+1]);
+    double uz = fabs(l[2]/sqrt(gam[3*2+2]));
+
+    double maxvr = (ur*w*sig + cs*sqrt(1.0+sig*(u2-ur*ur))) / (w*w-cs*cs*u2);
+    double maxvz = (uz*w*sig + cs*sqrt(1.0+sig*(u2-uz*uz))) / (w*w-cs*cs*u2);
+    double vpr = fabs((up*w*sig + cs*sqrt(1.0+sig*(u2-up*up))) / (w*w-cs*cs*u2)
+                        - r*wf);
+    double vpl = fabs((up*w*sig - cs*sqrt(1.0+sig*(u2-up*up))) / (w*w-cs*cs*u2)
+                        - r*wf);
+    double maxvp = vpr > vpl ? vpr : vpl;
+
+    double dtr = get_dL(xp,xm,0)/maxvr;
+    double dtp = get_dL(xp,xm,1)/maxvp;
+    double dtz = get_dL(xp,xm,2)/maxvz;
+
+    double dt = dtr;
+    dt = dt > dtp ? dt : dtp;
+    dt = dt > dtz ? dt : dtz;
+
+    return dt;
 }
 
 double getReynolds(double *prim, double w, double *x, double dx)
@@ -367,14 +382,12 @@ double getReynolds(double *prim, double w, double *x, double dx)
 
 void cons2prim_prep(double *cons, double *x)
 {
-
+    //TODO: complete this.
 }
 
 void cons2prim_solve_isothermal(double *cons, double *prim, double *x)
 {
-
-    
-
+    //TODO: complete this.
     int q;
     for( q=NUM_C ; q<NUM_Q ; ++q )
         prim[q] = cons[q]/cons[DDD];

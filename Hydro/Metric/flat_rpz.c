@@ -63,6 +63,20 @@ void metric_der_g(double x[3], int i, double dg[16])
         dg[4*2+2] = 2*r;
 }
 
+void metric_der_lapse(double x[3], double da[4])
+{
+    int i;
+    for(i=0; i<4; i++)
+        da[i] = 0.0;
+}
+
+void metric_der_shift(double x[3], double db[12])
+{
+    int i;
+    for(i=0; i<12; i++)
+        db[i] = 0.0;
+}
+
 int metric_killing(int mu)
 {
     if(mu == 1)
