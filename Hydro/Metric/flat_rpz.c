@@ -1,5 +1,12 @@
 #include "../metric.h"
 
+static double om = 0.0; 
+
+void setMetricParams(struct domain *theDomain)
+{
+   //om = theDomain->theParList.MetricPar1;
+}
+
 double metric_lapse(double x[3])
 {
     return 1.0;
