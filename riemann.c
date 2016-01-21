@@ -24,7 +24,7 @@ void vel( double * , double * , double * , double * , double * , double * , doub
 double get_signed_dp( double , double );
 void visc_flux( double * , double * , double * , double , double * );
 
-void solve_riemann( double * , double * , double *, double * , double * , double * , double , double * , double , double , int , double * , double * );
+void solve_riemann( double * , double * , double *, double * , double * , double * , double , double * , double , double , int , double * , double * , double * , double * );
 
 void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
@@ -45,24 +45,47 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
       primR[BPP] = Bp;
    }
 
-   double E,B;
-   solve_riemann( primL , primR , cL->cons , cR->cons , cL->gradp , cR->gradp , r , n , r*cL->wiph , dAdt , 0 , &E , &B );
+   double Er,Ez,Br,Bz;
+   solve_riemann( primL , primR , cL->cons , cR->cons , cL->gradp , cR->gradp , r , n , r*cL->wiph , dAdt , 0 , &Ez , &Br , &Er , &Bz );
 
    if( NUM_EDGES == 4 ){
-      cL->E[0] = .5*E;
-      cL->E[1] = .5*E;
+      cL->E[0] = .5*Ez;
+      cL->E[1] = .5*Ez;
 
-      cR->E[2] = .5*E;
-      cR->E[3] = .5*E;
+      cR->E[2] = .5*Ez;
+      cR->E[3] = .5*Ez;
 
-      cL->B[0] = .5*B;
-      cL->B[1] = .5*B;
+      cL->B[0] = .5*Br;
+      cL->B[1] = .5*Br;
 
-      cR->B[2] = .5*B;
-      cR->B[3] = .5*B;
+      cR->B[2] = .5*Br;
+      cR->B[3] = .5*Br;
    }
-   if( NUM_EDGES == 12 ){
+   if( NUM_EDGES == 8 && NUM_AZ_EDGES == 4 ){
 
+      cL->E[0] = .5*Ez;
+      cL->E[1] = .5*Ez;
+
+      cR->E[2] = .5*Ez;
+      cR->E[3] = .5*Ez;
+
+      cL->B[0] = .5*Br;
+      cL->B[1] = .5*Br;
+
+      cR->B[2] = .5*Br;
+      cR->B[3] = .5*Br;
+
+      cL->E[4] = .5*Er;
+      cL->E[5] = .5*Er;
+
+      cR->E[6] = .5*Er;
+      cR->E[7] = .5*Er;
+
+      cL->B[4] = .5*Bz;
+      cL->B[5] = .5*Bz;
+
+      cR->B[6] = .5*Bz;
+      cR->B[7] = .5*Bz;
    }
 }
 
@@ -101,8 +124,8 @@ void riemann_trans( struct face * F , double dt , int dim ){
       primR[BTRANS] = Bavg;
    }
 
-   double E,B;
-   solve_riemann( primL , primR , cL->cons , cR->cons , cL->grad , cR->grad , r , n , 0.0 , dAdt , dim , &E , &B );
+   double Erz,Brz,Ephi,buffer;
+   solve_riemann( primL , primR , cL->cons , cR->cons , cL->grad , cR->grad , r , n , 0.0 , dAdt , dim , &Erz , &Brz , &Ephi , &buffer );
 
 //  GET ACTUAL AREAS HERE ///////
    double dA  = F->dA;
@@ -110,23 +133,59 @@ void riemann_trans( struct face * F , double dt , int dim ){
    double dAR = r*cR->dphi;
 
    if( NUM_EDGES == 4 ){ 
-      cL->E[1] += .5*E*dA/dAL;
-      cL->E[3] += .5*E*dA/dAL;
+      cL->E[1] += .5*Erz*dA/dAL;
+      cL->E[3] += .5*Erz*dA/dAL;
 
-      cR->E[0] += .5*E*dA/dAR;
-      cR->E[2] += .5*E*dA/dAR;
+      cR->E[0] += .5*Erz*dA/dAR;
+      cR->E[2] += .5*Erz*dA/dAR;
 
-      cL->B[1] += .5*B*dA/dAL;
-      cL->B[3] += .5*B*dA/dAL;
+      cL->B[1] += .5*Brz*dA/dAL;
+      cL->B[3] += .5*Brz*dA/dAL;
 
-      cR->B[0] += .5*B*dA/dAR;
-      cR->B[2] += .5*B*dA/dAR;
+      cR->B[0] += .5*Brz*dA/dAR;
+      cR->B[2] += .5*Brz*dA/dAR;
    }
+   if( NUM_EDGES == 8 && NUM_AZ_EDGES == 4 ){
+      if( dim==1 ){
+         cL->E[1] += .5*Erz*dA/dAL;
+         cL->E[3] += .5*Erz*dA/dAL;
 
+         cR->E[0] += .5*Erz*dA/dAR;
+         cR->E[2] += .5*Erz*dA/dAR;
+
+         cL->B[1] += .5*Brz*dA/dAL;
+         cL->B[3] += .5*Brz*dA/dAL;
+
+         cR->B[0] += .5*Brz*dA/dAR;
+         cR->B[2] += .5*Brz*dA/dAR;
+
+         cL->E_phi[1] = .5*Ephi*dA/dAL;
+         cL->E_phi[3] = .5*Ephi*dA/dAL;
+         cR->E_phi[0] = .5*Ephi*dA/dAL;
+         cR->E_phi[2] = .5*Ephi*dA/dAL;
+      }else{
+         cL->E[5] += .5*Erz*dA/dAL;
+         cL->E[7] += .5*Erz*dA/dAL;
+
+         cR->E[4] += .5*Erz*dA/dAR;
+         cR->E[6] += .5*Erz*dA/dAR;
+
+         cL->B[5] += .5*Brz*dA/dAL;
+         cL->B[7] += .5*Brz*dA/dAL;
+
+         cR->B[4] += .5*Brz*dA/dAR;
+         cR->B[6] += .5*Brz*dA/dAR;
+
+         cL->E_phi[0] += .5*Ephi*dA/dAL;
+         cL->E_phi[1] += .5*Ephi*dA/dAL;
+         cR->E_phi[2] += .5*Ephi*dA/dAL;
+         cR->E_phi[3] += .5*Ephi*dA/dAL;
+      }
+   }
 }
 
 
-void solve_riemann( double * primL , double * primR , double * consL , double * consR , double * gradL , double * gradR , double r , double * n , double w , double dAdt , int dim , double * E_riemann , double * B_riemann ){
+void solve_riemann( double * primL , double * primR , double * consL , double * consR , double * gradL , double * gradR , double r , double * n , double w , double dAdt , int dim , double * E1_riemann , double * B1_riemann , double * E2_riemann , double * B2_riemann ){
 
    int q;
 
@@ -216,12 +275,19 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
 
    if( use_B_fields && NUM_Q > BPP ){
       if( dim==0 ){
-         *E_riemann = Flux[BRR]*r;
+         *E1_riemann = Flux[BRR]*r;   //Ez
+         *B1_riemann = Ustr[BRR]*r*r; // r*Br
+         *E2_riemann = -Flux[BZZ];    //Er
+         *B2_riemann = -Ustr[BZZ]*r;  //-r*Bz
       }else if( dim==1 ){
-         *E_riemann = -Flux[BPP]*r;
+         *E1_riemann = -Flux[BPP]*r;  //Ez
+         *B1_riemann = Ustr[BRR]*r*r; // r*Br
+         *E2_riemann = Flux[BZZ];     //Ephi
+      }else{
+         *E1_riemann = Flux[BPP]*r;   //Er
+         *B1_riemann = -Ustr[BZZ]*r;  //-r*Bz
+         *E2_riemann = -Flux[BRR]*r;  //Ephi
       }
-
-      *B_riemann = Ustr[BRR]*r*r;
    }
 
 }

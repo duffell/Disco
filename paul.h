@@ -11,8 +11,8 @@ enum{C_FIXED,C_WCELL,C_WRIEMANN};
 
 #define MOVE_CELLS C_WCELL
 
-#define NUM_C 8
-#define NUM_N 0
+#define NUM_C 5
+#define NUM_N 1
 #define NUM_Q (NUM_C+NUM_N)
 #define NUM_G 2
 #define NUM_EDGES 0 //4 or 8

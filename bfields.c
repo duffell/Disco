@@ -264,7 +264,10 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
       }
       n0 = Nf[jk];
    }
- 
+   if( NUM_FACES == 5 ){
+      //DO THE SAME THING BUT FOR THE VERTICALLY-ORIENTED FACES
+   } 
+
 }
 
 double get_dp( double , double );
@@ -276,8 +279,6 @@ void avg_Efields( struct domain * theDomain ){
    int Nr = theDomain->Nr;
    int Nz = theDomain->Nz;
    int * Np = theDomain->Np;
-
-   int Nf = theDomain->fIndex_r[theDomain->N_ftracks_r];
 
    for( j=0 ; j<Nr ; ++j ){
       for( k=0 ; k<Nz ; ++k ){
@@ -303,10 +304,29 @@ void avg_Efields( struct domain * theDomain ){
             cp->B[2] = Bl_avg;
             cp->B[3] = Br_avg;
 
+            if( NUM_EDGES == 8 ){
+               double El_avg = .5*( c->E[4] + cp->E[6] );
+               double Er_avg = .5*( c->E[5] + cp->E[7] );
+
+                c->E[4] = El_avg;
+                c->E[5] = Er_avg;
+               cp->E[6] = El_avg;
+               cp->E[7] = Er_avg;
+
+               double Bl_avg = .5*( c->B[4] + cp->B[6] );
+               double Br_avg = .5*( c->B[5] + cp->B[7] );
+
+                c->B[4] = Bl_avg;
+                c->B[5] = Br_avg;
+               cp->B[6] = Bl_avg;
+               cp->B[7] = Br_avg;
+            }
+
          }
       }
    }
 
+   int Nf = theDomain->fIndex_r[theDomain->N_ftracks_r];
    struct face * theFaces = theDomain->theFaces_1;
    int n;
    for( n=0 ; n<Nf ; ++n ){
@@ -350,6 +370,55 @@ void avg_Efields( struct domain * theDomain ){
       f->B = 0.0;
    }
 
+   if( NUM_EDGES == 8 ){
+//REPEAT THE ABOVE FOR VERTICALLY-ORIENTED FACES & RADIAL EDGES
+      Nf = theDomain->fIndex_z[theDomain->N_ftracks_z];
+      theFaces = theDomain->theFaces_2;
+      int n;
+      for( n=0 ; n<Nf ; ++n ){
+         struct face * f = theFaces+n;
+         struct cell * c1;
+         struct cell * c2;
+         if( f->LRtype == 0 ){ 
+            c1 = f->L;
+            c2 = f->R;
+         }else{
+            c1 = f->R;
+            c2 = f->L;
+         }    
+         double p1 = c1->piph;
+         double p2 = c2->piph;
+         double dp1 = get_dp(p2,p1);
+         double dp2 = c2->dphi - dp1; 
+         if( f->LRtype == 0 ){ 
+            double Eavg = ( dp2*c2->E[4] + dp1*c2->E[6] )/(dp1+dp2);
+            double Bavg = ( dp2*c2->B[4] + dp1*c2->B[6] )/(dp1+dp2);
+            f->E = .5*(f->L->E[5] + Eavg);
+            f->B = .5*(f->L->B[5] + Bavg);
+         }else{
+            double Eavg = ( dp2*c2->E[5] + dp1*c2->E[7] )/(dp1+dp2);
+            double Bavg = ( dp2*c2->B[5] + dp1*c2->B[7] )/(dp1+dp2);
+            f->E = .5*(f->R->E[4] + Eavg);
+            f->B = .5*(f->R->B[4] + Bavg);
+         }    
+      }
+
+      for( n=0 ; n<Nf ; ++n ){
+         struct face * f = theFaces+n;
+         if( f->LRtype==0 ){
+            f->L->E[5] = f->E;
+            f->L->B[5] = f->B;
+         }else{
+            f->R->E[4] = f->E;
+            f->R->B[4] = f->B;
+         }    
+         f->E = 0.0; 
+         f->B = 0.0; 
+      }
+
+   }
+
+//E_Z ALONG THE POLE...
    j=0;
    for( k=0 ; k<Nz ; ++k ){
       int jk = j+Nr*k;
@@ -380,9 +449,22 @@ void avg_Efields( struct domain * theDomain ){
             cp->B[2] = c->B[0];   
             cp->B[3] = c->B[1];  
 
+            if( NUM_EDGES == 8 ){
+ 
+               cp->E[6] = c->E[4];   
+               cp->E[7] = c->E[5];   
+               cp->B[6] = c->B[4];   
+               cp->B[7] = c->B[5];  
+
+            }
          }
       }
-   } 
+   }
+
+   if( NUM_AZ_EDGES == 4 ){
+//AVERAGE E_PHI SOMEHOW
+   }
+
 }
 
 void subtract_advective_B_fluxes( struct domain * theDomain ){
@@ -405,6 +487,10 @@ void subtract_advective_B_fluxes( struct domain * theDomain ){
             c->E[0] -= wm*c->B[0];
             c->E[1] -= wp*c->B[1];
 
+            if( NUM_EDGES == 8 ){
+               c->E[4] -= wm*c->B[4];
+               c->E[5] -= wp*c->B[5];
+            }
          }
       }
    }

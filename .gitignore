@@ -3,6 +3,9 @@ disco
 
 # User files
 Makefile.in
+Makefile_dir.in
+Makefile_opt.in
+in.par
 
 # Output files
 *.dat
@@ -12,3 +15,8 @@ Makefile.in
 # Build/editor files
 *.o
 *.swp
+
+# Viewer files
+Viewer/*.png
+Viewer/vdisco
+
