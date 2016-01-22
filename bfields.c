@@ -265,7 +265,9 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
       n0 = Nf[jk];
    }
    if( NUM_FACES == 5 ){
-      //DO THE SAME THING BUT FOR THE VERTICALLY-ORIENTED FACES
+      //DO THE SAME THING BUT FOR THE VERTICALLY-ORIENTED FACES AND RADIAL EDGES
+
+      //THEN SOMEHOW DO AZIMUTHAL EDGES
    } 
 
 }
