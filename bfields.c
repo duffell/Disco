@@ -231,21 +231,21 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
 
 void update_B_fluxes( struct domain * theDomain , double dt ){
 
-   struct face * theFaces_1 = theDomain->theFaces_1;
+   struct face * theFaces = theDomain->theFaces_1;
    int * Nf = theDomain->fIndex_r;
    int Njk = theDomain->N_ftracks_r;
-
    int n;
    int jk;
    int n0 = 0;
    for( jk=0 ; jk<Njk ; ++jk ){
       for( n=0 ; n<Nf[jk]-n0 ; ++n ){
-         struct face * f  = theFaces_1 + n0 + n;
+         struct face * f  = theFaces + n0 + n;
          int np = n+1;
          if( np==Nf[jk]-n0 ) np=0; 
-         struct face * fp = theFaces_1 + n0 + np;
+         struct face * fp = theFaces + n0 + np;
 
          double E;
+//FIXITFIXITFIXITFIXITFIXIT
          double dl = 1.0;
          if( f->LRtype == 0 ){
             E = f->L->E[1]*dl;
@@ -265,7 +265,37 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
       n0 = Nf[jk];
    }
    if( NUM_FACES == 5 ){
-      //DO THE SAME THING BUT FOR THE VERTICALLY-ORIENTED FACES AND RADIAL EDGES
+      theFaces = theDomain->theFaces_2;
+      Nf = theDomain->fIndex_z;
+      Njk = theDomain->N_ftracks_z;
+      n0 = 0; 
+      for( jk=0 ; jk<Njk ; ++jk ){
+         for( n=0 ; n<Nf[jk]-n0 ; ++n ){
+            struct face * f  = theFaces + n0 + n; 
+            int np = n+1; 
+            if( np==Nf[jk]-n0 ) np=0; 
+            struct face * fp = theFaces + n0 + np;
+
+            double E;
+//FIXITFIXITFIXITFIXITFIXIT
+            double dl = 1.0; 
+            if( f->LRtype == 0 ){ 
+               E = f->L->E[5]*dl;
+               f->L->Phi[4] -= E*dt;
+               f->L->Phi[0] += E*dt;
+            }else{
+               E = f->R->E[4]*dl;
+               f->R->Phi[3] -= E*dt;
+               f->R->Phi[0] -= E*dt;
+            }    
+            if( fp->LRtype == 0 ){ 
+               fp->L->Phi[4] += E*dt;
+            }else{
+               fp->R->Phi[3] += E*dt;
+            }    
+         }    
+         n0 = Nf[jk];
+      }
 
       //THEN SOMEHOW DO AZIMUTHAL EDGES
    } 

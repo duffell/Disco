@@ -131,6 +131,7 @@ struct face{
    double dxR;
    double cm[3];
    double dphi;
+   double dl;
    double dA;
 
    double E,B;
