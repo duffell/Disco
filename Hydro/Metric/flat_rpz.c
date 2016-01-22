@@ -80,6 +80,6 @@ void metric_der_shift(double x[3], double db[12])
 int metric_killing(int mu)
 {
     if(mu == 1)
-        return 1;
-    return 0;
+        return 0;
+    return 1;
 }

@@ -3,6 +3,8 @@
 #include "metric.h"
 #include "frame.h"
 
+#define DEBUG 0
+
 //Global Functions
 double get_cs2( double );
 double get_dp( double , double );
@@ -71,7 +73,6 @@ void prim2cons( double *prim, double *cons, double *x, double dV)
     metric_igam(x, igam);
     jac = metric_jacobian(x) / r;
     frame_U(x, U);
-
     double w, u0, u2;
     double u[3];
     double igaml[3];
@@ -132,8 +133,6 @@ void cons2prim(double *cons, double *prim, double *x, double dV)
     else
         cons2prim_solve_adiabatic(cons1, prim, x);
     cons2prim_finalize(prim, x);
-
-
 }
 
 void flux(double *prim, double *flux, double *x, double *n)
@@ -174,15 +173,15 @@ void flux(double *prim, double *flux, double *x, double *n)
     double l0 = -lapse*w + shift[0]*l[0] + shift[1]*l[1] + shift[2]*l[2];
     double uU = U[0]*l0 + U[1]*l[0] + U[2]*l[1] + U[3]*l[2];
     double un = u[0]*n[0] + r*u[1]*n[1] + u[2]*n[2];
-    double Un = U[1]*n[0] + r*u[2]*n[1] + u[3]*n[2];
+    double Un = U[1]*n[0] + r*U[2]*n[1] + U[3]*n[2];
     
     double rhoh = rho + gamma_law/(gamma_law-1.0)*Pp;
     double rhoe = Pp / (gamma_law-1.0);
 
     flux[DDD] = jac * rho*un;
-    flux[SRR] = jac * rhoh*un*l[0];
-    flux[LLL] = jac * rhoh*un*l[1];
-    flux[SZZ] = jac * rhoh*un*l[2];
+    flux[SRR] = jac * (rhoh*un*l[0] + Pp*n[0]);
+    flux[LLL] = jac * (rhoh*un*l[1] + Pp*n[1]*r);
+    flux[SZZ] = jac * (rhoh*un*l[2] + Pp*n[2]);
     flux[TAU] = jac * (-rhoe*uU*un - Pp*(uU*un+Un) - rho*(uU+1)*un);
 
     int q;
@@ -369,8 +368,8 @@ double mindt(double *prim, double wf, double *xp, double *xm)
     double dtz = get_dL(xp,xm,2)/maxvz;
 
     double dt = dtr;
-    dt = dt > dtp ? dt : dtp;
-    dt = dt > dtz ? dt : dtz;
+    dt = dt < dtp ? dt : dtp;
+    dt = dt < dtz ? dt : dtz;
 
     return dt;
 }
@@ -395,7 +394,7 @@ void cons2prim_solve_isothermal(double *cons, double *prim, double *x)
 
 void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
 {
-    double prec = 1.0e6;
+    double prec = 1.0e-14;
     double max_iter = 100;
 
     double r = x[0];
@@ -417,8 +416,6 @@ void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
 
     double s2 = 0.0;
     double Us = 0.0;
-    double e = (tau/D + Us + 1.0) / (lapse*U[0]);
-    double n = (gamma_law-1.0)/gamma_law;
 
     int i,j;
     for(i=0; i<3; i++)
@@ -429,6 +426,25 @@ void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
     for(i=0; i<3; i++)
         Us += S[i]*(shift[i]*U[0] + U[i+1]);
     Us /= D;
+    
+    double e = (tau/D + Us + 1.0) / (lapse*U[0]);
+    double n = (gamma_law-1.0)/gamma_law;
+
+    if(e*e < s2 && DEBUG)
+    {
+        printf("Not enough thermal energy (r=%.12lg, e2=%.12lg, s2=%.12lg)\n",
+                r, e*e, s2);
+
+        double cons0[NUM_Q];
+        prim2cons(prim, cons0, x, 1.0);
+
+        printf("prim: %.16lg %.16lg %.16lg %.16lg %.16lg\n",
+                prim[RHO], prim[PPP], prim[URR], prim[UPP], prim[UZZ]);
+        printf("cons0: %.16lg %.16lg %.16lg %.16lg %.16lg\n",
+                cons0[DDD], cons0[TAU], cons0[SRR], cons0[LLL], cons0[SZZ]);
+        printf("cons: %.16lg %.16lg %.16lg %.16lg %.16lg\n",
+                cons[DDD], cons[TAU], cons[SRR], cons[LLL], cons[SZZ]);
+    }
 
     double wmo;
     if(s2 == 0.0)
@@ -477,9 +493,9 @@ void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
                 wmo1 = 0.5*(wmomin+wmomax);
             i++;
         }
-        while(fabs(wmo-wmo1) > prec && i < max_iter);
+        while(fabs((wmo-wmo1)/(wmo+1.0)) > prec && i < max_iter);
 
-        if(i == max_iter)
+        if(i == max_iter && DEBUG)
             printf("ERROR: NR failed to converge\n");
     }
 
@@ -507,6 +523,17 @@ void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
     int q;
     for( q=NUM_C ; q<NUM_Q ; ++q )
         prim[q] = cons[q]/cons[DDD];
+    
+    if(e*e < s2 && DEBUG)
+    {
+        double cons1[NUM_Q];
+        prim2cons(prim, cons1, x, 1.0);
+
+        printf("prim1: %.16lg %.16lg %.16lg %.16lg %.16lg\n",
+                prim[RHO], prim[PPP], prim[URR], prim[UPP], prim[UZZ]);
+        printf("cons1: %.16lg %.16lg %.16lg %.16lg %.16lg\n",
+                cons1[DDD], cons1[TAU], cons1[SRR], cons1[LLL], cons1[SZZ]);
+    }
 }
 
 void cons2prim_finalize(double *prim, double *x)

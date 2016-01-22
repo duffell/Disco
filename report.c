@@ -18,6 +18,8 @@ void report( struct domain * theDomain ){
    int * dim_size = theDomain->dim_size;
    MPI_Comm grid_comm = theDomain->theComm;
 
+   double gamma_law = theDomain->theParList.Adiabatic_Index;
+
    struct planet * thePlanets = theDomain->thePlanets;
    int Npl = theDomain->Npl;
 
@@ -81,7 +83,7 @@ void report( struct domain * theDomain ){
             PsiR += rho*dV*cos(phi);
             PsiI += rho*dV*sin(phi);
  
-            L1_isen += fabs(Pp/pow(rho,5./3.)-1.)*dV;
+            L1_isen += fabs(Pp/pow(rho,gamma_law)-1.)*dV;
             L1_rho  += fabs(rho/rho0-1.)*dV;
             L1_P    += fabs(Pp/pow(rho,5./3.)/0.01-1.)*dV;
             Mdot += 2.*M_PI*r*rho*dV*c->prim[URR];
@@ -163,7 +165,7 @@ void report( struct domain * theDomain ){
 
    if( rank==0 ){
       FILE * rFile = fopen("report.dat","a");
-      fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e\n",t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R);
+      fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e %e\n",t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R, L1_isen);
       //fprintf(rFile,"%e %e %e ",t,Torque,Power);
       //for( j=0 ; j<10 ; ++j ) fprintf(rFile,"%e %e ",T_cut[j],P_cut[j]);
       //fprintf(rFile,"\n");
