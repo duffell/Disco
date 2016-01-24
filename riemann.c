@@ -14,6 +14,15 @@ void setRiemannParams( struct domain * theDomain ){
    riemann_solver = theDomain->theParList.Riemann_Solver;
    visc_flag = theDomain->theParList.visc_flag;
    use_B_fields = set_B_flag();
+
+   if( !use_B_fields && riemann_solver == _HLLD_ ){
+      printf("Ya dun goofed.\nRiemann Solver = HLLD,\nHydro does not include magnetic fields.\n");
+      exit(1);
+   }
+   if( !use_B_fields && (NUM_C > 5 || NUM_EDGES > 0 || NUM_FACES > 0 || NUM_AZ_EDGES > 0 ) ){
+      printf("Warning:  You are not solving MHD equations but possibly storing more variables than you need.\nNum Conserved Vars = %d\nFaces = %d\nEdges = %d\nAzimuthal Edges = %d\nCode might still work fine, this is just a warning.\n",NUM_C,NUM_FACES,NUM_EDGES,NUM_AZ_EDGES);
+   }
+
 }
 
 void prim2cons( double * , double * , double , double );
@@ -61,7 +70,7 @@ void riemann_phi( struct cell * cL , struct cell * cR, double r , double dAdt ){
       cR->B[2] = .5*Br;
       cR->B[3] = .5*Br;
    }
-   if( NUM_EDGES == 8 && NUM_AZ_EDGES == 4 ){
+   if( NUM_EDGES == 8 ){
 
       cL->E[0] = .5*Ez;
       cL->E[1] = .5*Ez;
@@ -126,61 +135,44 @@ void riemann_trans( struct face * F , double dt , int dim ){
 
    double Erz,Brz,Ephi,buffer;
    solve_riemann( primL , primR , cL->cons , cR->cons , cL->grad , cR->grad , r , n , 0.0 , dAdt , dim , &Erz , &Brz , &Ephi , &buffer );
+ 
+   double fracL = F->dphi / cL->dphi;
+   double fracR = F->dphi / cR->dphi;
 
-//  GET ACTUAL AREAS HERE ///////
-   double dA  = F->dA;
-   double dAL = r*cL->dphi;
-   double dAR = r*cR->dphi;
+   if( NUM_EDGES >= 4 && dim==1 ){ 
+      cL->E[1] += .5*Erz*fracL;
+      cL->E[3] += .5*Erz*fracL;
 
-   if( NUM_EDGES == 4 ){ 
-      cL->E[1] += .5*Erz*dA/dAL;
-      cL->E[3] += .5*Erz*dA/dAL;
+      cR->E[0] += .5*Erz*fracR;
+      cR->E[2] += .5*Erz*fracR;
 
-      cR->E[0] += .5*Erz*dA/dAR;
-      cR->E[2] += .5*Erz*dA/dAR;
+      cL->B[1] += .5*Brz*fracL;
+      cL->B[3] += .5*Brz*fracL;
 
-      cL->B[1] += .5*Brz*dA/dAL;
-      cL->B[3] += .5*Brz*dA/dAL;
-
-      cR->B[0] += .5*Brz*dA/dAR;
-      cR->B[2] += .5*Brz*dA/dAR;
+      cR->B[0] += .5*Brz*fracR;
+      cR->B[2] += .5*Brz*fracR;
    }
-   if( NUM_EDGES == 8 && NUM_AZ_EDGES == 4 ){
-      if( dim==1 ){
-         cL->E[1] += .5*Erz*dA/dAL;
-         cL->E[3] += .5*Erz*dA/dAL;
+//         cL->E_phi[1] = .5*Ephi*fracL;
+//         cL->E_phi[3] = .5*Ephi*fracL;
+//         cR->E_phi[0] = .5*Ephi*fracL;
+//         cR->E_phi[2] = .5*Ephi*fracL;
 
-         cR->E[0] += .5*Erz*dA/dAR;
-         cR->E[2] += .5*Erz*dA/dAR;
+//         cL->E_phi[0] += .5*Ephi*fracL;
+//         cL->E_phi[1] += .5*Ephi*fracL;
+//         cR->E_phi[2] += .5*Ephi*fracL;
+//         cR->E_phi[3] += .5*Ephi*fracL;
+   if( NUM_EDGES == 8 && dim==2){
+      cL->E[5] += .5*Erz*fracL;
+      cL->E[7] += .5*Erz*fracL;
 
-         cL->B[1] += .5*Brz*dA/dAL;
-         cL->B[3] += .5*Brz*dA/dAL;
+      cR->E[4] += .5*Erz*fracR;
+      cR->E[6] += .5*Erz*fracR;
 
-         cR->B[0] += .5*Brz*dA/dAR;
-         cR->B[2] += .5*Brz*dA/dAR;
+      cL->B[5] += .5*Brz*fracL;
+      cL->B[7] += .5*Brz*fracL;
 
-         cL->E_phi[1] = .5*Ephi*dA/dAL;
-         cL->E_phi[3] = .5*Ephi*dA/dAL;
-         cR->E_phi[0] = .5*Ephi*dA/dAL;
-         cR->E_phi[2] = .5*Ephi*dA/dAL;
-      }else{
-         cL->E[5] += .5*Erz*dA/dAL;
-         cL->E[7] += .5*Erz*dA/dAL;
-
-         cR->E[4] += .5*Erz*dA/dAR;
-         cR->E[6] += .5*Erz*dA/dAR;
-
-         cL->B[5] += .5*Brz*dA/dAL;
-         cL->B[7] += .5*Brz*dA/dAL;
-
-         cR->B[4] += .5*Brz*dA/dAR;
-         cR->B[6] += .5*Brz*dA/dAR;
-
-         cL->E_phi[0] += .5*Ephi*dA/dAL;
-         cL->E_phi[1] += .5*Ephi*dA/dAL;
-         cR->E_phi[2] += .5*Ephi*dA/dAL;
-         cR->E_phi[3] += .5*Ephi*dA/dAL;
-      }
+      cR->B[4] += .5*Brz*fracR;
+      cR->B[6] += .5*Brz*fracR;
    }
 }
 
@@ -273,20 +265,20 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       consR[q] += (Flux[q] - w*Ustr[q])*dAdt;
    }
 
-   if( use_B_fields && NUM_Q > BPP ){
+   if( use_B_fields && NUM_Q > BZZ ){
       if( dim==0 ){
          *E1_riemann = Flux[BRR]*r;   //Ez
          *B1_riemann = Ustr[BRR]*r*r; // r*Br
-         *E2_riemann = -Flux[BZZ];    //Er
-         *B2_riemann = -Ustr[BZZ]*r;  //-r*Bz
+         *E2_riemann =-1.0*-Flux[BZZ];    //Er
+         *B2_riemann = 0.0*-Ustr[BZZ]*r;  //-r*Bz
       }else if( dim==1 ){
          *E1_riemann = -Flux[BPP]*r;  //Ez
          *B1_riemann = Ustr[BRR]*r*r; // r*Br
-         *E2_riemann = Flux[BZZ];     //Ephi
+         *E2_riemann = 0.0;//Flux[BZZ];     //Ephi
       }else{
-         *E1_riemann = Flux[BPP]*r;   //Er
-         *B1_riemann = -Ustr[BZZ]*r;  //-r*Bz
-         *E2_riemann = -Flux[BRR]*r;  //Ephi
+         *E1_riemann =-1.0*Flux[BPP]*r;   //Er
+         *B1_riemann = 0.0*-Ustr[BZZ]*r;  //-r*Bz
+         *E2_riemann = 0.0;//-Flux[BRR]*r;  //Ephi
       }
    }
 

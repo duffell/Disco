@@ -60,12 +60,13 @@ void set_B_fields( struct domain * theDomain ){
    if( NUM_FACES==5 && theDomain->Nz > 1 ){
       int NRZ2 = theDomain->N_ftracks_z;
       setup_faces( theDomain , 2 );
-      for( n=0 ; n<theDomain->fIndex_r[NRZ2] ; ++n ){
+      for( n=0 ; n<theDomain->fIndex_z[NRZ2] ; ++n ){
          struct face * f = theDomain->theFaces_2 + n; 
          double prim[NUM_Q];
          initial( prim , f->cm );
          double Phi = 0.0; 
          if( NUM_Q > BZZ ) Phi = prim[BZZ]*f->dA;
+
          if( f->LRtype == 0 ){ 
             f->L->Phi[4] = Phi; 
          }else{
@@ -177,7 +178,6 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
                }
             }
          }
-
          int Nfz = theDomain->fIndex_z[theDomain->N_ftracks_z];  
          for( n=0 ; n<Nfz ; ++n ){
             struct face * f = theFaces_2 + n;
@@ -227,8 +227,6 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
    }
 }
 
-/////////////////////HERE IS WHERE I GOT TO LAST....
-
 void update_B_fluxes( struct domain * theDomain , double dt ){
 
    struct face * theFaces = theDomain->theFaces_1;
@@ -245,26 +243,25 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
          struct face * fp = theFaces + n0 + np;
 
          double E;
-//FIXITFIXITFIXITFIXITFIXIT
-         double dl = 1.0;
+         double dl = f->dl;
          if( f->LRtype == 0 ){
-            E = f->L->E[1]*dl;
-            f->L->Phi[2] -= E*dt;
-            f->L->Phi[0] += E*dt;
+            E = f->L->E[1];
+            f->L->Phi[2] -= E*dl*dt;
+            f->L->Phi[0] += E*dl*dt;
          }else{
-            E = f->R->E[0]*dl;
-            f->R->Phi[1] -= E*dt;
-            f->R->Phi[0] -= E*dt;
+            E = f->R->E[0];
+            f->R->Phi[1] -= E*dl*dt;
+            f->R->Phi[0] -= E*dl*dt;
          }
          if( fp->LRtype == 0 ){
-            fp->L->Phi[2] += E*dt;
+            fp->L->Phi[2] += E*dl*dt;
          }else{
-            fp->R->Phi[1] += E*dt;
+            fp->R->Phi[1] += E*dl*dt;
          }
       }
       n0 = Nf[jk];
    }
-   if( NUM_FACES == 5 ){
+   if( NUM_FACES == 5 && NUM_EDGES == 8 ){
       theFaces = theDomain->theFaces_2;
       Nf = theDomain->fIndex_z;
       Njk = theDomain->N_ftracks_z;
@@ -277,21 +274,20 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
             struct face * fp = theFaces + n0 + np;
 
             double E;
-//FIXITFIXITFIXITFIXITFIXIT
-            double dl = 1.0; 
+            double dl = f->dl;
             if( f->LRtype == 0 ){ 
-               E = f->L->E[5]*dl;
-               f->L->Phi[4] -= E*dt;
-               f->L->Phi[0] += E*dt;
+               E = f->L->E[5];
+               f->L->Phi[4] -= E*dl*dt;
+               f->L->Phi[0] += E*dl*dt;
             }else{
-               E = f->R->E[4]*dl;
-               f->R->Phi[3] -= E*dt;
-               f->R->Phi[0] -= E*dt;
+               E = f->R->E[4];
+               f->R->Phi[3] -= E*dl*dt;
+               f->R->Phi[0] -= E*dl*dt;
             }    
             if( fp->LRtype == 0 ){ 
-               fp->L->Phi[4] += E*dt;
+               fp->L->Phi[4] += E*dl*dt;
             }else{
-               fp->R->Phi[3] += E*dt;
+               fp->R->Phi[3] += E*dl*dt;
             }    
          }    
          n0 = Nf[jk];
