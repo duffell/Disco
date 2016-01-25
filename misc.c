@@ -556,7 +556,7 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       double xm[3] = {r_jph[j-1],phim,z_kph[k-1]};
       double dV = get_dV( xp , xm );
       double r  = get_moment_arm( xp , xm );
-      double x[3] = {r, 0.5*(phim+phip), 0.5*(z_kph[k-1]+z_kph[k])};
+      double x[3] = {r, 0.5*(xp[1]+xm[1]), 0.5*(xp[2]+xm[2])};
       cons2prim( sweep[iL].cons , sweep[iL].prim , x , dV );
 
       xp[1] = phip;
@@ -564,8 +564,7 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       dV = get_dV( xp , xm );
       r  = get_moment_arm( xp , xm );
       x[0] = r;
-      x[1] = 0.5*(phim+phip);
-      x[2] = 0.5*(z_kph[k-1]+z_kph[k]);
+      x[1] = 0.5*(xp[1]+xm[1]);
       cons2prim( sweep[iL+1].cons , sweep[iL+1].prim , x , dV );
 
    }
