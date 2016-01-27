@@ -165,7 +165,9 @@ void report( struct domain * theDomain ){
 
    if( rank==0 ){
       FILE * rFile = fopen("report.dat","a");
-      fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e %e\n",t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R, L1_isen);
+      fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e %e %e\n",
+                t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R,
+                L1_rho,L1_isen);
       //fprintf(rFile,"%e %e %e ",t,Torque,Power);
       //for( j=0 ; j<10 ; ++j ) fprintf(rFile,"%e %e ",T_cut[j],P_cut[j]);
       //fprintf(rFile,"\n");
