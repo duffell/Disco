@@ -2,9 +2,9 @@
 disco
 
 # User files
-Makefile.in
-Makefile.in*
-in.par?*
+Makefile_dir.in
+Makefile_opt.in
+in.par*
 
 # Output files
 *.dat
@@ -18,3 +18,8 @@ Viewer/vdisco
 # Build/editor files
 *.o
 *.swp
+
+# Viewer files
+Viewer/*.png
+Viewer/vdisco
+

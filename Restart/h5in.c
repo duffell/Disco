@@ -79,6 +79,7 @@ void freeDomain( struct domain * );
 void setPlanetParams( struct domain * );
 void initializePlanets( struct planet * );
 int num_diagnostics( void );
+int get_num_rzFaces( int , int , int );
 
 void restart( struct domain * theDomain ){
 
@@ -234,6 +235,11 @@ void restart( struct domain * theDomain ){
    theDomain->num_tools = num_tools;
    theDomain->theTools.t_avg = 0.0; 
    theDomain->theTools.Qr = (double *) calloc( Nr*num_tools , sizeof(double) );
+
+   theDomain->N_ftracks_r = get_num_rzFaces( theDomain->Nr , theDomain->Nz , 1 ); 
+   theDomain->N_ftracks_z = get_num_rzFaces( theDomain->Nr , theDomain->Nz , 2 ); 
+   theDomain->fIndex_r = (int *) malloc( (theDomain->N_ftracks_r+1)*sizeof(int) );
+   theDomain->fIndex_z = (int *) malloc( (theDomain->N_ftracks_z+1)*sizeof(int) );
 
 }
 

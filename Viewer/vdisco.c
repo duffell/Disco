@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR 0.0 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  1.0 //5.24e-5 //(HUGE_VAL)  //1.04
+#define VAL_FLOOR -8e-3//-3e-2 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -34,13 +34,13 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
-int dim3d = 1;
+int dim3d = 0;
 int t_off = 0;
 int p_off = 0;
 int cmap = 4;
 int draw_1d = 0;
 int draw_bar = 0;
-int draw_t   = 0;
+int draw_t   = 1;
 int draw_spiral = 0;
 int draw_jet = 0;
 int draw_planet = 0;
@@ -77,11 +77,13 @@ double getval( double * thisZone , int q ){
    double rho = thisZone[0];
 //   double X   = thisZone[5];
    double P   = thisZone[1];
-   double Br = thisZone[5];
-   double Bp = thisZone[6];
+//   double Br = thisZone[5];
+//   double Bp = thisZone[6];
+//   double Bz = thisZone[7];
 //   double gam = sqrt(1.+ur*ur+up*up);
 //   double e = (rho+4.*P)*gam*gam-P - rho*gam;
-   return( fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+//   return( .5*(Br*Br+Bp*Bp+Bz*Bz) ); //fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+   return( rho*P );
 }
 
 void getMaxMin(void){
@@ -97,6 +99,15 @@ void getMaxMin(void){
          if( logscale ) val = log(val)/log(10.);
          if( maxval < val ) maxval = val;
          if( minval > val ) minval = val;
+      }
+      if( dim3d ){
+         for( k=0 ; k<Nz ; ++k ){
+            int jk = j*Nz+k;
+            val = getval( rzZones[jk], q );
+            if( logscale ) val = log(val)/log(10.);
+            if( maxval < val ) maxval = val;
+            if( minval > val ) minval = val;
+         }
       }
    }
    if( floors ){
@@ -430,7 +441,7 @@ void DrawGLScene(){
          }
          if( dim3d ){
             int k;
-            for( k=0 ; k<Nz/2 ; ++k ){
+            for( k=2 ; k<Nz/2 ; ++k ){
                int jk = j*Nz+k;
                double rp = r_jph[j]/rescale;
                double rm = r_jph[j-1]/rescale;
@@ -538,23 +549,32 @@ void DrawGLScene(){
    }
 
    if( draw_spiral ){
-      double rp   = thePlanets[1][0];
+      double rp   = 5.0;//thePlanets[1][0];
+      double Mach = 3.65;
+      double p0 = 1.2;
       double dr = .07;
-      int Nr = 50;
+      int Nr = 200;
       double Rmin = 0.5;
-      double Rmax = 1.5;
+      double Rmax = 1.1;
       int k;
       glLineWidth(4.0f);
       glColor3f(1.0,1.0,1.0);
       glBegin(GL_LINE_LOOP);
       for( k=0 ; k<Nr ; ++k ){
-         double phi0 = ((double)k+.5)/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
-         double x0 = rp + dr*cos(phi0);
-         double y0 = dr*sin(phi0);
-         
-         double phi = atan2(y0,x0);
-         double r   = sqrt(x0*x0+y0*y0);
-//         double phi = (double)k/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
+         //double phi0 = ((double)k+.5)/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
+         double x = ((double)k+.5)/(double)Nr;
+         double r = .001*pow(.5/.001,x);
+         double phi0 = p0-log(r/0.001)*Mach;//(3.-2.*sqrt(1./r)-r)*5.;
+//         double x0 = rp + dr*cos(phi0);
+//         double y0 = dr*sin(phi0);
+  
+         double phi = phi0;
+//         double r = rp;       
+
+//         double phi = atan2(y0,x0);
+//         double phi = ((double)k+.5)/(double)Nr*2.*M_PI*9.32 + 4.*M_PI;
+//         double r   = sqrt(x0*x0+y0*y0);
+//         double r = pow(phi/10.,-2.);
 //         double r   = 2./(1.+sin(phi));//1.0;//((double)k+0.5)/(double)Nr*(Rmax-Rmin) + Rmin;
 //         if( r<1. ) phi = -phi;
          r /= rescale;
@@ -808,6 +828,7 @@ int main(int argc, char **argv)
          }
       }
    }
+   printf("theZones built\n");
 
    loc_size[0] = 1;
    for( j=0 ; j<Nr ; ++j ){
@@ -817,6 +838,7 @@ int main(int argc, char **argv)
          readPatch( filename , group2 , (char *)"Cells" , rzZones[jk] , H5T_NATIVE_DOUBLE , 2 , start , loc_size , glo_size );
       }
    }
+   printf("rzZones built\n");
 
    start[1] = 0;
    loc_size[0] = 1;

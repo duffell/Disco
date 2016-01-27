@@ -65,7 +65,7 @@ void onestep( struct domain * theDomain , double RK , double dt , int first_step
       move_cells( theDomain , dt );
       if( bflag ){
          check_flipped( theDomain );
-         flip_fluxes( theDomain );
+//         flip_fluxes( theDomain );
       }
    }
 

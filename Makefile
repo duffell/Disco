@@ -1,5 +1,9 @@
-MAKEFILE_IN = $(PWD)/Makefile.in
-include $(MAKEFILE_IN)
+
+MAKEFILE_OPT = $(PWD)/Makefile_opt.in
+include $(MAKEFILE_OPT)
+
+MAKEFILE_H5  = $(PWD)/Makefile_dir.in
+include $(MAKEFILE_H5)
 
 CC = mpicc
 FLAGS = -O3 -Wall -g

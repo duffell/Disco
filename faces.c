@@ -39,6 +39,9 @@ void addFace( struct face * theFaces , int n , struct cell * cL , struct cell * 
    theFaces[n].dphi= dp;//get_dp(xp[1],xm[1]);
    theFaces[n].dA  = get_dA(xp,xm,dim);
 
+   int dim_trans = 4-2*dim;//3-dim;
+   theFaces[n].dl = xp[dim_trans] - xm[dim_trans];
+
    theFaces[n].E = 0.0;
    theFaces[n].B = 0.0;
    theFaces[n].LRtype = LRtype;

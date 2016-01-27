@@ -14,6 +14,15 @@ void setRiemannParams( struct domain * theDomain ){
    riemann_solver = theDomain->theParList.Riemann_Solver;
    visc_flag = theDomain->theParList.visc_flag;
    use_B_fields = set_B_flag();
+
+   if( !use_B_fields && riemann_solver == _HLLD_ ){
+      printf("Ya dun goofed.\nRiemann Solver = HLLD,\nHydro does not include magnetic fields.\n");
+      exit(1);
+   }
+   if( !use_B_fields && (NUM_C > 5 || NUM_EDGES > 0 || NUM_FACES > 0 || NUM_AZ_EDGES > 0 ) ){
+      printf("Warning:  You are not solving MHD equations but possibly storing more variables than you need.\nNum Conserved Vars = %d\nFaces = %d\nEdges = %d\nAzimuthal Edges = %d\nCode might still work fine, this is just a warning.\n",NUM_C,NUM_FACES,NUM_EDGES,NUM_AZ_EDGES);
+   }
+
 }
 
 void prim2cons( double * , double * , double * , double );
@@ -24,7 +33,7 @@ void vel( double * , double * , double * , double * , double * , double * , doub
 double get_signed_dp( double , double );
 void visc_flux( double * , double * , double * , double * , double * );
 
-void solve_riemann( double * , double * , double *, double * , double * , double * , double * , double * , double , double , int , double * , double * );
+void solve_riemann( double * , double * , double *, double * , double * , double * , double * , double * , double , double , int , double * , double * , double * , double * );
 
 void riemann_phi( struct cell * cL , struct cell * cR, double * x , double dAdt ){
 
@@ -46,24 +55,47 @@ void riemann_phi( struct cell * cL , struct cell * cR, double * x , double dAdt 
       primR[BPP] = Bp;
    }
 
-   double E,B;
-   solve_riemann( primL , primR , cL->cons , cR->cons , cL->gradp , cR->gradp , x , n , r*cL->wiph , dAdt , 0 , &E , &B );
+   double Er,Ez,Br,Bz;
+   solve_riemann( primL , primR , cL->cons , cR->cons , cL->gradp , cR->gradp , x , n , r*cL->wiph , dAdt , 0 , &Ez , &Br , &Er , &Bz );
 
    if( NUM_EDGES == 4 ){
-      cL->E[0] = .5*E;
-      cL->E[1] = .5*E;
+      cL->E[0] = .5*Ez;
+      cL->E[1] = .5*Ez;
 
-      cR->E[2] = .5*E;
-      cR->E[3] = .5*E;
+      cR->E[2] = .5*Ez;
+      cR->E[3] = .5*Ez;
 
-      cL->B[0] = .5*B;
-      cL->B[1] = .5*B;
+      cL->B[0] = .5*Br;
+      cL->B[1] = .5*Br;
 
-      cR->B[2] = .5*B;
-      cR->B[3] = .5*B;
+      cR->B[2] = .5*Br;
+      cR->B[3] = .5*Br;
    }
-   if( NUM_EDGES == 12 ){
+   if( NUM_EDGES == 8 ){
 
+      cL->E[0] = .5*Ez;
+      cL->E[1] = .5*Ez;
+
+      cR->E[2] = .5*Ez;
+      cR->E[3] = .5*Ez;
+
+      cL->B[0] = .5*Br;
+      cL->B[1] = .5*Br;
+
+      cR->B[2] = .5*Br;
+      cR->B[3] = .5*Br;
+
+      cL->E[4] = .5*Er;
+      cL->E[5] = .5*Er;
+
+      cR->E[6] = .5*Er;
+      cR->E[7] = .5*Er;
+
+      cL->B[4] = .5*Bz;
+      cL->B[5] = .5*Bz;
+
+      cR->B[6] = .5*Bz;
+      cR->B[7] = .5*Bz;
    }
 }
 
@@ -102,32 +134,51 @@ void riemann_trans( struct face * F , double dt , int dim ){
       primR[BTRANS] = Bavg;
    }
 
-   double E,B;
-   solve_riemann( primL , primR , cL->cons , cR->cons , cL->grad , cR->grad , F->cm , n , 0.0 , dAdt , dim , &E , &B );
+   double Erz,Brz,Ephi,buffer;
+   solve_riemann( primL , primR , cL->cons , cR->cons , cL->grad , cR->grad , F->cm , n , 0.0 , dAdt , dim , &Erz , &Brz , &Ephi , &buffer );
+ 
+   double fracL = F->dphi / cL->dphi;
+   double fracR = F->dphi / cR->dphi;
 
-//  GET ACTUAL AREAS HERE ///////
-   double dA  = F->dA;
-   double dAL = r*cL->dphi;
-   double dAR = r*cR->dphi;
+   if( NUM_EDGES >= 4 && dim==1 ){ 
+      cL->E[1] += .5*Erz*fracL;
+      cL->E[3] += .5*Erz*fracL;
 
-   if( NUM_EDGES == 4 ){ 
-      cL->E[1] += .5*E*dA/dAL;
-      cL->E[3] += .5*E*dA/dAL;
+      cR->E[0] += .5*Erz*fracR;
+      cR->E[2] += .5*Erz*fracR;
 
-      cR->E[0] += .5*E*dA/dAR;
-      cR->E[2] += .5*E*dA/dAR;
+      cL->B[1] += .5*Brz*fracL;
+      cL->B[3] += .5*Brz*fracL;
 
-      cL->B[1] += .5*B*dA/dAL;
-      cL->B[3] += .5*B*dA/dAL;
-
-      cR->B[0] += .5*B*dA/dAR;
-      cR->B[2] += .5*B*dA/dAR;
+      cR->B[0] += .5*Brz*fracR;
+      cR->B[2] += .5*Brz*fracR;
    }
+//         cL->E_phi[1] = .5*Ephi*fracL;
+//         cL->E_phi[3] = .5*Ephi*fracL;
+//         cR->E_phi[0] = .5*Ephi*fracL;
+//         cR->E_phi[2] = .5*Ephi*fracL;
 
+//         cL->E_phi[0] += .5*Ephi*fracL;
+//         cL->E_phi[1] += .5*Ephi*fracL;
+//         cR->E_phi[2] += .5*Ephi*fracL;
+//         cR->E_phi[3] += .5*Ephi*fracL;
+   if( NUM_EDGES == 8 && dim==2){
+      cL->E[5] += .5*Erz*fracL;
+      cL->E[7] += .5*Erz*fracL;
+
+      cR->E[4] += .5*Erz*fracR;
+      cR->E[6] += .5*Erz*fracR;
+
+      cL->B[5] += .5*Brz*fracL;
+      cL->B[7] += .5*Brz*fracL;
+
+      cR->B[4] += .5*Brz*fracR;
+      cR->B[6] += .5*Brz*fracR;
+   }
 }
 
 
-void solve_riemann( double * primL , double * primR , double * consL , double * consR , double * gradL , double * gradR , double * x , double * n , double w , double dAdt , int dim , double * E_riemann , double * B_riemann ){
+void solve_riemann( double * primL , double * primR , double * consL , double * consR , double * gradL , double * gradR , double * x , double * n , double w , double dAdt , int dim , double * E1_riemann , double * B1_riemann , double * E2_riemann , double * B2_riemann ){
 
    int q;
    double r = x[0];
@@ -216,14 +267,21 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       consR[q] += (Flux[q] - w*Ustr[q])*dAdt;
    }
 
-   if( use_B_fields && NUM_Q > BPP ){
+   if( use_B_fields && NUM_Q > BZZ ){
       if( dim==0 ){
-         *E_riemann = Flux[BRR]*r;
+         *E1_riemann = Flux[BRR]*r;   //Ez
+         *B1_riemann = Ustr[BRR]*r*r; // r*Br
+         *E2_riemann =-1.0*-Flux[BZZ];    //Er
+         *B2_riemann = 0.0*-Ustr[BZZ]*r;  //-r*Bz
       }else if( dim==1 ){
-         *E_riemann = -Flux[BPP]*r;
+         *E1_riemann = -Flux[BPP]*r;  //Ez
+         *B1_riemann = Ustr[BRR]*r*r; // r*Br
+         *E2_riemann = 0.0;//Flux[BZZ];     //Ephi
+      }else{
+         *E1_riemann =-1.0*Flux[BPP]*r;   //Er
+         *B1_riemann = 0.0*-Ustr[BZZ]*r;  //-r*Bz
+         *E2_riemann = 0.0;//-Flux[BRR]*r;  //Ephi
       }
-
-      *B_riemann = Ustr[BRR]*r*r;
    }
 
 }
