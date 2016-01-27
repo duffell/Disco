@@ -2,8 +2,8 @@
 disco
 
 # User files
-Makefile_dir.in
-Makefile_opt.in
+Makefile_dir.in*
+Makefile_opt.in*
 in.par*
 
 # Output files

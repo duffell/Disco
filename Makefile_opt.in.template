@@ -1,0 +1,14 @@
+### Makefile_opt.in for Disco ###
+
+# This file contains user-specified build options.
+
+# Build options
+INITIAL  = vortex
+HYDRO    = euler
+BOUNDARY = polar
+OUTPUT   = h5out
+RESTART  = h5in
+PLANETS  = none
+METRIC   = flat_rpz
+FRAME    = normal
+
