@@ -383,8 +383,8 @@ void vel(double *prim1, double *prim2, double *Sl, double *Sr, double *Ss,
 
     //TODO: Use n[] PROPERLY.  This only works if n = (1,0,0) or some 
     //      permutation.
-    double vSn1 = (uS1[0]*n[0]+uS1[1]*n[1]+uS1[2]*n[2]) / w1;  //SPATIAL v
-    double vSn2 = (uS2[0]*n[0]+uS2[1]*n[1]+uS2[2]*n[2]) / w2;  //SPATIAL v
+    double vSn1 = (uS1[0]*n[0]+uS1[1]*n[1]+uS1[2]*n[2]) / w1;
+    double vSn2 = (uS2[0]*n[0]+uS2[1]*n[1]+uS2[2]*n[2]) / w2;
     double bn = (b[0]*n[0]+b[1]*n[1]+b[2]*n[2]);
     double ign = igam[3*0+0]*n[0] + igam[3*1+1]*n[1] + igam[3*2+2]*n[2];
 

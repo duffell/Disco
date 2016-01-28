@@ -33,11 +33,16 @@ def plotCheckpoint(file):
     t, r, prim = loadCheckpoint(file)
 
     print("   Plotting...")
-    fig, ax = plt.subplots(2,2,figsize=(12,9))
+    nq = prim.shape[1]
+
+    fig, ax = plt.subplots(2,3,figsize=(14,9))
     plotAx(ax[0,0], r, prim[:,0], "linear", "linear", r"$r$", r"$\rho$", 'k+')
     plotAx(ax[0,1], r, prim[:,1], "linear", "linear", r"$r$", r"$P$", 'k+')
     plotAx(ax[1,0], r, prim[:,2], "linear", "linear", r"$r$", r"$u_r$", 'k+')
-    plotAx(ax[1,1], r, prim[:,3], "linear", "linear", r"$r$", r"$u_\phi$", 'k+')
+    plotAx(ax[1,1], r, prim[:,3], "linear", "linear", r"$r$", r"$u_\phi$",'k+')
+    plotAx(ax[1,2], r, prim[:,4], "linear", "linear", r"$r$", r"$u_z$", 'k+')
+    if nq > 5:
+        plotAx(ax[0,2], r, prim[:,5], "linear", "linear", r"$r$", r"$q$", 'k+')
 
     title = "DISCO t = {0:.3g}".format(t)
 
