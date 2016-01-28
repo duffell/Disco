@@ -119,7 +119,7 @@ void metric_der_g(double x[3], int i, double dg[16])
     else if(i == 3)
     {
         dg[0]  = -2*MoR2 * ct;               // 00
-        dg[1]  = -4*MoR3*r * ct*ct;          // 01
+        dg[1]  = -4*MoR3*r * ct;             // 01
         dg[3]  =  2*MoR2 * (1.0-2*ct*ct);    // 03
         dg[5]  = -6*MoR4*r*r * ct;           // 11
         dg[7]  =  2*MoR3*r * (1.0-3.0*ct*ct);// 13

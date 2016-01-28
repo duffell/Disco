@@ -15,6 +15,7 @@ void setICparams( struct domain * theDomain ){
 void initial(double *prim, double *x)
 {
     double r = x[0];
+    double phi = x[1];
     double z = x[2];
     double R = sqrt(r*r+z+z);
 
@@ -42,6 +43,8 @@ void initial(double *prim, double *x)
     double lr = g0r*u0 + grr*ur;
     double lp = gpp*up;
 
+    //lr = 0.0;
+
     double uIsco2 = 0.5;
     double u_cs2 = uIsco2 / (Mach*Mach);
     double cs2 = u_cs2 / (1.0 + u_cs2);
@@ -57,4 +60,6 @@ void initial(double *prim, double *x)
     
     if( NUM_N>0 ) 
         prim[NUM_C] = r>10.0 ? 1.0 : 0.0;
+    if(NUM_N > 1)
+        prim[NUM_C+1] = r*cos(phi)>0 ? 1.0 : 0.0;
 }

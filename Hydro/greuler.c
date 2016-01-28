@@ -369,8 +369,8 @@ void vel(double *prim1, double *prim2, double *Sl, double *Sr, double *Ss,
         uS2[i] = 0.0;
         for(j=0; j<3; j++)
         {
-            uS1[i] = igam[3*i+j]*l1[j];
-            uS2[i] = igam[3*i+j]*l2[j];
+            uS1[i] += igam[3*i+j]*l1[j];
+            uS2[i] += igam[3*i+j]*l2[j];
         }
         u21 += uS1[i]*l1[i];
         u22 += uS2[i]*l2[i];
@@ -397,8 +397,22 @@ void vel(double *prim1, double *prim2, double *Sl, double *Sr, double *Ss,
     double sl2 = hn * (a * (vSn2*(1.0-cs22) - dv2) / (1.0-v22*cs22) - bn);
     double sr2 = hn * (a * (vSn2*(1.0-cs22) + dv2) / (1.0-v22*cs22) - bn);
 
+/*
+    printf("cs2(L/R): %.12lg %.12lg\n", cs21, cs22);
+    printf("vSn(L/R): %.12lg %.12lg\n", vSn1, vSn2);
+    printf("w  (L/R): %.12lg %.12lg\n", w1, w2);
+    printf("u2 (L/R): %.12lg %.12lg\n", u21, u22);
+    printf("v2 (L/R): %.12lg %.12lg\n", v21, v22);
+    printf("sl (L/R): %.12lg %.12lg\n", sl1, sl2);
+    printf("sr (L/R): %.12lg %.12lg\n", sr1, sr2);
+*/
+
     *Sr = sr1 > sr2 ? sr1 : sr2;
     *Sl = sl1 < sl2 ? sl1 : sl2;
+
+    //double maxv = fabs(*Sr) > fabs(*Sl) ? fabs(*Sr) : fabs(*Sl);
+    //*Sr = maxv;
+    //*Sl = -maxv;
 
     //Now for the contact wave speed.
     double sL = *Sl / hn;
@@ -535,7 +549,7 @@ void cons2prim_solve_isothermal(double *cons, double *prim, double *x)
 
 void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
 {
-    double prec = 1.0e-14;
+    double prec = 1.0e-15;
     double max_iter = 100;
 
     double r = x[0];
@@ -636,8 +650,8 @@ void cons2prim_solve_adiabatic(double *cons, double *prim, double *x)
         }
         while(fabs((wmo-wmo1)/(wmo+1.0)) > prec && i < max_iter);
 
-        if(i == max_iter && DEBUG)
-            printf("ERROR: NR failed to converge\n");
+        if(i == max_iter)
+            printf("ERROR: NR failed to converge: err = %.12lg\n", fabs((wmo-wmo1)/(wmo+1.0)));
     }
 
     //Prim recovery
