@@ -109,11 +109,68 @@ void prim2cons( double *prim, double *cons, double *x, double dV)
 void getUstar(double *prim, double *Ustar, double *x, double Sk, double Ss, 
                 double *n, double *Bpack)
 {
-    Ustar[DDD] = 0.0;
-    Ustar[SRR] = 0.0;
-    Ustar[LLL] = 0.0;
-    Ustar[SZZ] = 0.0;
-    Ustar[TAU] = 0.0;
+    double r = x[0];
+    double rho = prim[RHO];
+    double Pp = prim[PPP];
+    double l[3] = {prim[URR], prim[UPP], prim[UZZ]};
+
+    double a, b[3], igam[9], jac, U[4];
+    a = metric_lapse(x);
+    metric_shift(x, b);
+    metric_igam(x, igam);
+    jac = metric_jacobian(x) / r;
+    frame_U(x, U);
+
+    double bn = n[0]*b[0] + n[1]*b[1] + n[2]*b[2];
+    double ign = n[0]*igam[0] + n[1]*igam[4] + n[2]*igam[8];
+    double Un = n[0]*U[1] + n[1]*U[2] + n[2]*U[3];
+    double hn = n[0] + r*n[1] + n[2];
+
+    double ss = Ss/hn;
+    double sk = Sk/hn;
+
+    double uS[3];
+    double u2 = 0.0;
+    int i,j;
+    for(i=0; i<3; i++)
+    {
+        uS[i] = 0.0;;
+        for(j=0; j<3; j++)
+            uS[i] += igam[3*i+j]*l[j];
+        u2 += l[i]*uS[i];
+    }
+
+    double w = sqrt(1+u2);
+    double u0 = w/a;
+    double l0 = -a*w + b[0]*l[0] + b[1]*l[1] + b[2]*l[2];
+    double vn = a * (n[0]*uS[0] + n[1]*uS[1] + n[2]*uS[2]) / w - bn;
+    double uU = l0*U[0] + l[0]*U[1] + l[1]*U[2] + l[2]*U[3];
+
+    // q == F - s * U
+    double rhoh = rho + gamma_law/(gamma_law-1.0) * Pp;
+    double qE = rhoh*w*w*(vn-sk) + Pp*(sk+bn);
+
+    double mn = rhoh*w * (n[0]*uS[0] + n[1]*uS[1] + n[2]*uS[2]);
+    double qMn = mn*(vn-sk) + a*Pp*ign;
+
+    double ssS = (ss+bn)/a;
+    double skS = (sk+bn)/a;
+
+    // P star!
+    double Pstar = (qMn - ssS*qE) / (a*(ign - ssS*skS));
+
+    double kappa = (vn - sk) / (ss - sk);
+    double alpha1 = (Pp - Pstar) / (ss - sk);
+    double alpha2 = (vn*Pp - ss*Pstar) / (ss - sk);
+
+    double rhoe = Pp / (gamma_law - 1.0);
+    double tau = -rhoe*uU*u0 - Pp*(u0*uU+U[0]) - rho*(uU+1.0)*u0;
+
+    Ustar[DDD] = jac * rho*u0 * kappa;
+    Ustar[SRR] = jac * (rhoh*u0*l[0] * kappa + alpha1 * n[0]);
+    Ustar[LLL] = jac * (rhoh*u0*l[1] * kappa + alpha1 * n[1]);
+    Ustar[SZZ] = jac * (rhoh*u0*l[2] * kappa + alpha1 * n[2]);
+    Ustar[TAU] = jac * (tau * kappa - Un*alpha1 + U[0]*alpha2);
 
     int q;
     for(q = NUM_C; q < NUM_Q; q++)
@@ -326,26 +383,74 @@ void vel(double *prim1, double *prim2, double *Sl, double *Sr, double *Ss,
 
     //TODO: Use n[] PROPERLY.  This only works if n = (1,0,0) or some 
     //      permutation.
-    double vn1 = (uS1[0]*n[0]+uS1[1]*n[1]+uS1[2]*n[2]) / w1;
-    double vn2 = (uS2[0]*n[0]+uS2[1]*n[1]+uS2[2]*n[2]) / w2;
+    double vSn1 = (uS1[0]*n[0]+uS1[1]*n[1]+uS1[2]*n[2]) / w1;  //SPATIAL v
+    double vSn2 = (uS2[0]*n[0]+uS2[1]*n[1]+uS2[2]*n[2]) / w2;  //SPATIAL v
     double bn = (b[0]*n[0]+b[1]*n[1]+b[2]*n[2]);
     double ign = igam[3*0+0]*n[0] + igam[3*1+1]*n[1] + igam[3*2+2]*n[2];
 
-    double dv1 = sqrt(cs21*(ign - vn1*vn1 - cs21*(ign*v21-vn1*vn1))) / w1;
-    double dv2 = sqrt(cs22*(ign - vn2*vn2 - cs22*(ign*v22-vn2*vn2))) / w2;
+    double dv1 = sqrt(cs21*(ign - vSn1*vSn1 - cs21*(ign*v21-vSn1*vSn1))) / w1;
+    double dv2 = sqrt(cs22*(ign - vSn2*vSn2 - cs22*(ign*v22-vSn2*vSn2))) / w2;
     double hn = n[0] + r*n[1] + n[2];
 
-    double sl1 = hn * (a * (vn1*(1.0-cs21) - dv1) / (1.0-v21*cs21) - bn);
-    double sr1 = hn * (a * (vn1*(1.0-cs21) + dv1) / (1.0-v21*cs21) - bn);
-    double sl2 = hn * (a * (vn2*(1.0-cs22) - dv2) / (1.0-v22*cs22) - bn);
-    double sr2 = hn * (a * (vn2*(1.0-cs22) + dv2) / (1.0-v22*cs22) - bn);
+    double sl1 = hn * (a * (vSn1*(1.0-cs21) - dv1) / (1.0-v21*cs21) - bn);
+    double sr1 = hn * (a * (vSn1*(1.0-cs21) + dv1) / (1.0-v21*cs21) - bn);
+    double sl2 = hn * (a * (vSn2*(1.0-cs22) - dv2) / (1.0-v22*cs22) - bn);
+    double sr2 = hn * (a * (vSn2*(1.0-cs22) + dv2) / (1.0-v22*cs22) - bn);
 
     *Sr = sr1 > sr2 ? sr1 : sr2;
     *Sl = sl1 < sl2 ? sl1 : sl2;
 
-    //TODO: USE REAL HLLC SPEED THIS IS WRONG
-    *Ss = 0.5*(*Sl + *Sr);
+    //Now for the contact wave speed.
+    double sL = *Sl / hn;
+    double sR = *Sr / hn;
 
+    double rhohL = rho1 + gamma_law/(gamma_law-1)*P1;
+    double rhohR = rho2 + gamma_law/(gamma_law-1)*P2;
+    double vnL = a*vSn1 - bn;
+    double vnR = a*vSn2 - bn;
+
+    double ML[3] = {rhohL*w1*l1[0], rhohL*w1*l1[1], rhohL*w1*l1[2]};
+    double MR[3] = {rhohR*w2*l2[0], rhohR*w2*l2[1], rhohR*w2*l2[2]};
+    double EL = rhohL*w1*w1-P1;
+    double ER = rhohR*w2*w2-P2;
+
+    double FML[3] = {ML[0]*vnL+n[0]*a*P1, ML[1]*vnL+n[1]*a*P1, 
+                        ML[2]*vnL+n[2]*a*P1};
+    double FMR[3] = {MR[0]*vnR+n[0]*a*P2, MR[1]*vnR+n[1]*a*P2, 
+                        MR[2]*vnR+n[2]*a*P2};
+    double FEL = EL*vnL + P1*(vnL+bn);
+    double FER = ER*vnR + P2*(vnR+bn);
+
+    double UE = (sR*ER - sL*EL - FER + FEL) / (sR - sL);
+    double FE = ((sR*FEL - sL*FER + sL*sR*(ER-EL)) / (sR - sL) - bn*UE) / a;
+
+    double UM_hll[3], FM_hll[3];
+    for(i=0; i<3; i++)
+    {
+        UM_hll[i] = (sR*MR[i]-sL*ML[i]-FMR[i]+FML[i]) / (sR-sL);
+        FM_hll[i] = ((sR*FML[i]-sL*FMR[i]+sL*sR*(MR[i]-ML[i])) / (sR-sL)
+                        - bn*UM_hll[i]) / a;
+    }
+    double UM = 0.0;
+    double FM = 0.0;
+    for(i=0; i<3; i++)
+    {
+        double igi = n[0]*igam[3*i] + n[1]*igam[3*i+1] + n[2]*igam[3*i+2];
+        UM += igi * UM_hll[i];
+        FM += igi * FM_hll[i];
+    }
+
+    double A = FE;
+    double B = -FM-ign*UE;
+    double C = ign*UM;
+
+    double sS;
+    if(fabs(4*A*C/(B*B)) < 1.0e-7)
+        sS = -C/B * (1.0 + A*C/(B*B) + 2*A*A*C*C/(B*B*B*B));
+    else
+        sS = (-B - sqrt(B*B-4*A*C)) / (2*A);
+
+    *Ss = hn * (a*sS - bn);
 }
 
 double mindt(double *prim, double wc, double *xp, double *xm)
@@ -364,7 +469,9 @@ double mindt(double *prim, double wc, double *xp, double *xm)
     metric_igam(x, igam);
 
     int i,j;
-    double uS[3], u2;
+    double uS[3];
+    double u2 = 0.0;
+
     for(i=0; i<3; i++)
     {
         uS[i] = 0.0;
@@ -386,12 +493,12 @@ double mindt(double *prim, double wc, double *xp, double *xm)
     double vrr = fabs(a * (vS[0]*sig + dvr) / (1-v2*cs*cs) - b[0]);
 
     double dvp = cs * sqrt(igam[4]*(1-cs*cs*v2) - sig*vS[1]*vS[1]) / w;
-    double vpl = fabs(r * (a * (vS[1]*sig - dvr) / (1-v2*cs*cs) - b[1]));
-    double vpr = fabs(r * (a * (vS[1]*sig + dvr) / (1-v2*cs*cs) - b[1]));
+    double vpl = fabs(r * (a * (vS[1]*sig - dvp) / (1-v2*cs*cs) - b[1] - wc));
+    double vpr = fabs(r * (a * (vS[1]*sig + dvp) / (1-v2*cs*cs) - b[1] - wc));
     
     double dvz = cs * sqrt(igam[8]*(1-cs*cs*v2) - sig*vS[2]*vS[2]) / w;
-    double vzl = fabs(a * (vS[2]*sig - dvr) / (1-v2*cs*cs) - b[2]);
-    double vzr = fabs(a * (vS[2]*sig + dvr) / (1-v2*cs*cs) - b[2]);
+    double vzl = fabs(a * (vS[2]*sig - dvz) / (1-v2*cs*cs) - b[2]);
+    double vzr = fabs(a * (vS[2]*sig + dvz) / (1-v2*cs*cs) - b[2]);
 
     double maxvr = vrr > vrl ? vrr : vrl;
     double maxvp = vpr > vpl ? vpr : vpl;
