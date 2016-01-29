@@ -1,7 +1,10 @@
 
 #include "../paul.h"
 
+static double gamma_law = 0.0;
+
 void setICparams( struct domain * theDomain ){
+   gamma_law = theDomain->theParList.Adiabatic_Index;
 }
 
 void initial( double * prim , double * x ){
@@ -14,7 +17,7 @@ void initial( double * prim , double * x ){
   // double xx = r*cos(phi);
   // double yy = r*sin(phi)-.5;
    prim[RHO] = 1.0 + 3.0*exp(-80.*R2);
-   prim[PPP] = pow(prim[RHO],5./3.);
+   prim[PPP] = pow(prim[RHO],gamma_law);
    prim[URR] = 0.0;
    prim[UPP] = 0.0;
    prim[UZZ] = 0.0;

@@ -1,0 +1,7 @@
+### Makefile_dir.in for Disco ###
+
+# This file contains machine-specific variables for building Disco.
+
+# Location of HDF5 Library
+H55 = /opt/local
+

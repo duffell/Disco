@@ -74,8 +74,8 @@ double getmindt( struct domain * theDomain ){
 }
 
 void initial( double * , double * );
-void prim2cons( double * , double * , double , double );
-void cons2prim( double * , double * , double , double );
+void prim2cons( double * , double * , double * , double );
+void cons2prim( double * , double * , double * , double );
 void restart( struct domain * );
 /*
 void clear_w( struct domain * theDomain ){
@@ -90,7 +90,7 @@ void clear_w( struct domain * theDomain ){
    }
 }*/
 
-double get_omega( double * );
+double get_omega( double * , double * );
 double mesh_om( double );
 
 void set_wcell( struct domain * theDomain ){
@@ -100,19 +100,39 @@ void set_wcell( struct domain * theDomain ){
    int Nz = theDomain->Nz;
    int * Np = theDomain->Np;
    double * r_jph = theDomain->r_jph;
+   double * z_kph = theDomain->z_kph;
 
    int i,j,k;
    for( j=0 ; j<Nr ; ++j ){
       for( k=0 ; k<Nz ; ++k ){
          int jk = j+Nr*k;
+         double rm = r_jph[j-1];
+         double rp = r_jph[j];
+         double zm = z_kph[k-1];
+         double zp = z_kph[k];
          for( i=0 ; i<Np[jk] ; ++i ){
             struct cell * cL = &(theCells[jk][i ]);  
             double w = 0.0;
             if( mesh_motion ){
                int ip = (i+1)%Np[jk];
+               double phip = cL->piph;
+               double phim = phip-cL->dphi;
+               double xp[3] = {rp,phip,zp};
+               double xm[3] = {rm,phim,zm};
+               double r = get_moment_arm( xp , xm );
+               double x[3] = {r, 0.5*(phim+phip), 0.5*(zm+zp)};
+               double wL = get_omega( cL->prim , x );
+
                struct cell * cR = &(theCells[jk][ip]);
-               double wL = get_omega( cL->prim );
-               double wR = get_omega( cR->prim );
+               phip = cR->piph;
+               phim = phip-cR->dphi;
+               xp[1] = phip;
+               xm[1] = phim;
+               r = get_moment_arm( xp , xm );
+               x[0] = r;
+               x[1] = 0.5*(phim+phip);
+               double wR = get_omega( cR->prim , x );
+
                w = .5*(wL + wR); 
             }
             cL->wiph = w;
@@ -293,14 +313,15 @@ void calc_prim( struct domain * theDomain ){
             double xm[3] = {rm,phim,z_kph[k-1]};
             double r = get_moment_arm( xp , xm );
             double dV = get_dV( xp , xm );
-            cons2prim( c->cons , c->prim , r , dV );
+            double x[3] = {r, 0.5*(phim+phip), 0.5*(z_kph[k]+z_kph[k-1])};
+            cons2prim( c->cons , c->prim , x , dV );
          }
       }
    }
 }
 
 void plm_phi( struct domain * );
-void riemann_phi( struct cell * , struct cell * , double , double );
+void riemann_phi( struct cell * , struct cell * , double * , double );
 
 void phi_flux( struct domain * theDomain , double dt ){
 
@@ -323,7 +344,8 @@ void phi_flux( struct domain * theDomain , double dt ){
             double xm[3] = {r_jph[j-1],phi,z_kph[k-1]};
             double r = get_moment_arm(xp,xm);
             double dA = get_dA(xp,xm,0); 
-            riemann_phi( &(cp[i]) , &(cp[ip]) , r , dA*dt );
+            double x[3] = {r, phi, 0.5*(z_kph[k-1]+z_kph[k])};
+            riemann_phi( &(cp[i]) , &(cp[ip]) , x , dA*dt );
          }
       }
    }
@@ -494,7 +516,8 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       double xm[3] = {r_jph[j-1],phim,z_kph[k-1]};
       double r  = get_moment_arm( xp , xm );
       double dV = get_dV( xp , xm );
-      cons2prim( sweep[iS].cons , sweep[iS].prim , r , dV );
+      double x[3] = {r, 0.5*(phim+phip), 0.5*(z_kph[k-1]+z_kph[k])};
+      cons2prim( sweep[iS].cons , sweep[iS].prim , x , dV );
       //Shift Memory
       int blocksize = Np[jk]-iSp-1;
       if( iSp != Np[jk]-1 ) memmove( sweep+iSp , sweep+iSp+1 , blocksize*sizeof(struct cell) );
@@ -533,13 +556,16 @@ void AMRsweep( struct domain * theDomain , struct cell ** swptr , int jk ){
       double xm[3] = {r_jph[j-1],phim,z_kph[k-1]};
       double dV = get_dV( xp , xm );
       double r  = get_moment_arm( xp , xm );
-      cons2prim( sweep[iL].cons , sweep[iL].prim , r , dV );
+      double x[3] = {r, 0.5*(xp[1]+xm[1]), 0.5*(xp[2]+xm[2])};
+      cons2prim( sweep[iL].cons , sweep[iL].prim , x , dV );
 
       xp[1] = phip;
       xm[1] = phi0;
       dV = get_dV( xp , xm );
       r  = get_moment_arm( xp , xm );
-      cons2prim( sweep[iL+1].cons , sweep[iL+1].prim , r , dV );
+      x[0] = r;
+      x[1] = 0.5*(xp[1]+xm[1]);
+      cons2prim( sweep[iL+1].cons , sweep[iL+1].prim , x , dV );
 
    }
 }

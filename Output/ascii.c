@@ -2,8 +2,8 @@
 #include "../paul.h"
 
 double get_dV( double * , double * );
-void prim2cons( double * , double * , double , double );
-void cons2prim( double * , double * , double , double );
+void prim2cons( double * , double * , double * , double );
+void cons2prim( double * , double * , double * , double );
 
 void output( struct domain * theDomain , char * filestart ){
 

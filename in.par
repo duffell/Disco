@@ -32,7 +32,7 @@ Log_Zoning		0	//0=Uniform, 1=Log, 2=Hybrid
 Log_Radius		0.25	//Only for option 2 of Log_Zoning
 
 //Numerical Parameters
-CFL			0.2
+CFL			0.5
 PLM			1.5
 Riemann_Solver		2	//0=HLL, 1=HLLC, 2=HLLD
 Mesh_Motion		0	//0=Fixed, 1=By Cell, 2=Riemann Solver, 3=Avg

@@ -92,8 +92,8 @@ void setupDomain( struct domain * theDomain ){
 }
 
 void initial( double * , double * ); 
-void prim2cons( double * , double * , double , double );
-void cons2prim( double * , double * , double , double );
+void prim2cons( double * , double * , double * , double );
+void cons2prim( double * , double * , double * , double );
 void restart( struct domain * ); 
 void calc_dp( struct domain * );
 void set_wcell( struct domain * );
@@ -141,8 +141,8 @@ void setupCells( struct domain * theDomain ){
                   adjust_gas( theDomain->thePlanets+p , x , c->prim , gam );
                }
             }
-            prim2cons( c->prim , c->cons , r , dV );
-            cons2prim( c->cons , c->prim , r , dV );
+            prim2cons( c->prim , c->cons , x , dV );
+            cons2prim( c->cons , c->prim , x , dV );
          }    
       }    
    }
