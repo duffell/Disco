@@ -4,17 +4,17 @@ Restart			0	//Restart from input.h5
 
 //Time Range//
 T_Start			0.0 //1.0
-T_End			10.0 //100000.0
-T_Times_2pi		0
+T_End			0.004 //100000.0
+T_Times_2pi		1
 
 //Output Frequency//
 Num_Reports		1e5
 Num_Snapshots		0
-Num_Checkpoints		100
+Num_Checkpoints		0
 Use_Logtime		0
 
 //Grid Dimensions//
-Num_R			64
+Num_R			32
 Num_Z			1
 aspect			1.0	//Cell Aspect Ratio, for calculating N_phi
 Max_Aspect_Short	3.0	
@@ -22,9 +22,9 @@ Max_Aspect_Long		3.0	//Aspect Ratio AMR Refinement Criteria
 
 //Domain Parameters//
 R_Min			0.0
-R_Max			5.0
-Z_Min			-0.5
-Z_Max			0.5
+R_Max			0.5
+Z_Min			-0.0625
+Z_Max			0.0625
 Z_Periodic		0
 Phi_Max			1.0 
 P_Times_2pi		1
@@ -34,13 +34,13 @@ Log_Radius		0.25	//Only for option 2 of Log_Zoning
 //Numerical Parameters
 CFL			0.2
 PLM			1.5
-Riemann_Solver		1	//0=HLL, 1=HLLC, 2=HLLD
-Mesh_Motion		1	//0=Fixed, 1=By Cell, 2=Riemann Solver, 3=Avg
+Riemann_Solver		2	//0=HLL, 1=HLLC, 2=HLLD
+Mesh_Motion		0	//0=Fixed, 1=By Cell, 2=Riemann Solver, 3=Avg
 Absorbing_BC		0
 Initial_Regrid		0
 Density_Floor		0.0 //1e-5
 Pressure_Floor		0.0 //1e-8
-Constrained_Transport	0
+Constrained_Transport	1
 
 //Hydro Parameters
 Adiabatic_Index		1.66666667

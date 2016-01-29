@@ -15,6 +15,7 @@ int between( double phi , double phip , double phim , double phi_max ){
 }
 
 double get_dA( double * , double * , int );
+double get_dL( double * , double * , int );
 double get_dp( double , double );
 
 int get_num_rzFaces( int Nr , int Nz , int dim ){
@@ -39,8 +40,8 @@ void addFace( struct face * theFaces , int n , struct cell * cL , struct cell * 
    theFaces[n].dphi= dp;//get_dp(xp[1],xm[1]);
    theFaces[n].dA  = get_dA(xp,xm,dim);
 
-   int dim_trans = 4-2*dim;//3-dim;
-   theFaces[n].dl = xp[dim_trans] - xm[dim_trans];
+   int dim_trans = 3-dim;//4-2*dim;//3-dim;
+   theFaces[n].dl = get_dL( xp , xm , dim_trans );//xp[dim_trans] - xm[dim_trans];
 
    theFaces[n].E = 0.0;
    theFaces[n].B = 0.0;
@@ -87,9 +88,11 @@ void buildfaces( struct domain * theDomain , int dim , int mode ){
          int jkp = jp + Nr*k;
          if( dim==2 ) jkp = j + Nr*kp;
 
-         double dxL = .5*(r_jph[j]  - r_jph[j-1]);
-         double dxR = .5*(r_jph[jp] - r_jph[j]  );
-         if( dim==2 ){
+         double dxL,dxR;
+         if( dim==1 ){
+            dxL = .5*(r_jph[j]  - r_jph[j-1]);
+            dxR = .5*(r_jph[jp] - r_jph[j]  );
+         }else{
             dxL = .5*(z_kph[k]  - z_kph[k-1]);
             dxR = .5*(z_kph[kp] - z_kph[k]  );
          }

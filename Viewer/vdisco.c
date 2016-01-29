@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR -8e-3//-3e-2 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
+#define VAL_FLOOR 0    //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  5e-5 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
@@ -34,22 +34,22 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
-int dim3d = 0;
+int dim3d = 1;
 int t_off = 0;
 int p_off = 0;
 int cmap = 4;
 int draw_1d = 0;
 int draw_bar = 0;
-int draw_t   = 1;
+int draw_t   = 0;
 int draw_spiral = 0;
 int draw_jet = 0;
 int draw_planet = 0;
 int draw_scale = 0;
 int reflect  = 0;
-int valq=0;
-int draw_border = 0;
+int valq=-1;
+int draw_border = 1;
 int logscale = 0;
-int floors=0;
+int floors=1;
 int help_screen=0;
 int print_vals=0;
 
@@ -77,13 +77,13 @@ double getval( double * thisZone , int q ){
    double rho = thisZone[0];
 //   double X   = thisZone[5];
    double P   = thisZone[1];
-//   double Br = thisZone[5];
-//   double Bp = thisZone[6];
-//   double Bz = thisZone[7];
+   double Br = thisZone[5];
+   double Bp = thisZone[6];
+   double Bz = thisZone[7];
 //   double gam = sqrt(1.+ur*ur+up*up);
 //   double e = (rho+4.*P)*gam*gam-P - rho*gam;
-//   return( .5*(Br*Br+Bp*Bp+Bz*Bz) ); //fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
-   return( rho*P );
+   return( .5*(Br*Br+Bp*Bp+Bz*Bz) ); //fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+//   return( rho*P );
 }
 
 void getMaxMin(void){
@@ -406,7 +406,7 @@ void DrawGLScene(){
             float rrr,ggg,bbb;
             get_rgb( val , &rrr , &ggg , &bbb , cmap );
 
-            if( !dim3d || sin(phi)>0 || cos(phi)<0.0 ){
+            if( !dim3d || sin(phi)>0 || cos(phi+.25)<0.0 ){
                if( !draw_border_now ){ 
                   glColor3f( rrr , ggg , bbb );
                   glBegin(GL_POLYGON);

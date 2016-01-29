@@ -5,7 +5,6 @@ disco
 Makefile.in
 Makefile_dir.in
 Makefile_opt.in
-in.par
 
 # Output files
 *.dat
@@ -15,8 +14,13 @@ in.par
 # Build/editor files
 *.o
 *.swp
+.DS_Store
 
 # Viewer files
-Viewer/*.png
+Viewer/Movies/
+Viewer/movie.py
 Viewer/vdisco
+*.png
+*.eps
+*.ppm
 
