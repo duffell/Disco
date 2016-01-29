@@ -11,15 +11,16 @@ in.par*
 *.h5
 *.log
 
-# Viewer files
-Viewer/vdisco
-*.png
-
 # Build/editor files
 *.o
 *.swp
+.DS_Store
 
 # Viewer files
-Viewer/*.png
+Viewer/Movies/
+Viewer/movie.py
 Viewer/vdisco
+*.png
+*.eps
+*.ppm
 

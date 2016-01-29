@@ -17,8 +17,8 @@ enum{C_FIXED,C_WCELL,C_WRIEMANN};
 #define NUM_G 2
 
 //Magnetic field tracking things.  Can be set to zero if there is no MHD.
-#define NUM_EDGES 8    //0, 4 or 8 
-#define NUM_FACES 5    //0, 3 or 5
+#define NUM_EDGES 4    //0, 4 or 8 
+#define NUM_FACES 3    //0, 3 or 5
 #define NUM_AZ_EDGES 0 //0, 0 or 4
 
 struct param_list{

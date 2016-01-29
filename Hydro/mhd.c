@@ -469,8 +469,8 @@ double mindt(double * prim , double w , double * xp , double * xm ){
    double maxvp = cf + fabs(vp);
    double maxvz = cf + fabs(vz);
 
-   double dtr = get_dL(xp,xm,0)/maxvr;
-   double dtp = get_dL(xp,xm,1)/maxvp;
+   double dtr = get_dL(xp,xm,1)/maxvr;
+   double dtp = get_dL(xp,xm,0)/maxvp;
    double dtz = get_dL(xp,xm,2)/maxvz;
    
    double dt = dtr;
