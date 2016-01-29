@@ -2,7 +2,7 @@
 EXE  = vdisco
 
 GLUT = /usr/X11R6
-HDF5 = /usr/local
+HDF5 = /opt/local
 
 LIBS = -L$(GLUT)/lib -L$(HDF5)/lib -framework GLUT -framework OpenGL -lXmu -lXext -lXi -lX11 -lm -lhdf5 -lz
 INCL = -I$(GLUT)/include -I$(HDF5)/include
