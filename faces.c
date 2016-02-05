@@ -77,9 +77,9 @@ void buildfaces( struct domain * theDomain , int dim , int mode ){
    int Nzmax = Nz-1;
    if( dim==1 ) Nzmax = Nz;
 
+      for( k=0 ; k<Nzmax ; ++k ){
    for( j=0 ; j<Nrmax ; ++j ){
       int jp = j+1;
-      for( k=0 ; k<Nzmax ; ++k ){
          int JK = j+Nrmax*k;
          if( mode == 0 ) ntj[JK] = n;
          int kp = k+1;

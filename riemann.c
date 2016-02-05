@@ -271,15 +271,15 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       if( dim==0 ){
          *E1_riemann = Flux[BRR]*r;   //Ez
          *B1_riemann = Ustr[BRR]*r*r; // r*Br
-         *E2_riemann = 0.0;//-1.0*-Flux[BZZ];    //Er
-         *B2_riemann = 0.0*-Ustr[BZZ]*r;  //-r*Bz
+         *E2_riemann = Flux[BZZ];    //Er
+         *B2_riemann = Ustr[BZZ]*r;  //-r*Bz
       }else if( dim==1 ){
          *E1_riemann = -Flux[BPP]*r;  //Ez
          *B1_riemann = Ustr[BRR]*r*r; // r*Br
          *E2_riemann = 0.0;//Flux[BZZ];     //Ephi
       }else{
-         *E1_riemann = 0.0;//-1.0*Flux[BPP]*r;   //Er
-         *B1_riemann = 0.0*-Ustr[BZZ]*r;  //-r*Bz
+         *E1_riemann = -Flux[BPP]*r;   //Er
+         *B1_riemann = Ustr[BZZ]*r;  //-r*Bz
          *E2_riemann = 0.0;//-Flux[BRR]*r;  //Ephi
       }
    }

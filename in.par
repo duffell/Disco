@@ -4,7 +4,7 @@ Restart			0	//Restart from input.h5
 
 //Time Range//
 T_Start			0.0 //1.0
-T_End			0.004 //100000.0
+T_End			0.5 //100000.0
 T_Times_2pi		1
 
 //Output Frequency//
@@ -14,8 +14,8 @@ Num_Checkpoints		0
 Use_Logtime		0
 
 //Grid Dimensions//
-Num_R			32
-Num_Z			1
+Num_R			16
+Num_Z			32 //8
 aspect			1.0	//Cell Aspect Ratio, for calculating N_phi
 Max_Aspect_Short	3.0	
 Max_Aspect_Long		3.0	//Aspect Ratio AMR Refinement Criteria
@@ -23,8 +23,8 @@ Max_Aspect_Long		3.0	//Aspect Ratio AMR Refinement Criteria
 //Domain Parameters//
 R_Min			0.0
 R_Max			0.5
-Z_Min			-0.0625
-Z_Max			0.0625
+Z_Min			-0.5 //-0.0625
+Z_Max			0.5  //0.0625
 Z_Periodic		0
 Phi_Max			1.0 
 P_Times_2pi		1
