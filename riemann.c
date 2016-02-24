@@ -153,15 +153,10 @@ void riemann_trans( struct face * F , double dt , int dim ){
       cR->B[0] += .5*Brz*fracR;
       cR->B[2] += .5*Brz*fracR;
    }
-//         cL->E_phi[1] = .5*Ephi*fracL;
-//         cL->E_phi[3] = .5*Ephi*fracL;
-//         cR->E_phi[0] = .5*Ephi*fracL;
-//         cR->E_phi[2] = .5*Ephi*fracL;
-
-//         cL->E_phi[0] += .5*Ephi*fracL;
-//         cL->E_phi[1] += .5*Ephi*fracL;
-//         cR->E_phi[2] += .5*Ephi*fracL;
-//         cR->E_phi[3] += .5*Ephi*fracL;
+   if( NUM_AZ_EDGES == 4 && dim==1 ){
+      cL->E_phi[1] = Ephi;
+      cR->E_phi[0] = Ephi;
+   }
    if( NUM_EDGES == 8 && dim==2){
       cL->E[5] += .5*Erz*fracL;
       cL->E[7] += .5*Erz*fracL;
@@ -174,6 +169,10 @@ void riemann_trans( struct face * F , double dt , int dim ){
 
       cR->B[4] += .5*Brz*fracR;
       cR->B[6] += .5*Brz*fracR;
+   }
+   if( NUM_AZ_EDGES == 4 && dim==2 ){
+      cL->E_phi[3] = Ephi;
+      cR->E_phi[2] = Ephi;
    }
 }
 
@@ -276,11 +275,11 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       }else if( dim==1 ){
          *E1_riemann = -Flux[BPP]*r;  //Ez
          *B1_riemann = Ustr[BRR]*r*r; // r*Br
-         *E2_riemann = 0.0;//Flux[BZZ];     //Ephi
+         *E2_riemann = 1.0*Flux[BZZ];     //Ephi
       }else{
          *E1_riemann = -Flux[BPP]*r;   //Er
          *B1_riemann = Ustr[BZZ]*r;  //-r*Bz
-         *E2_riemann = 0.0;//-Flux[BRR]*r;  //Ephi
+         *E2_riemann = 1.0*-Flux[BRR]*r;  //Ephi
       }
    }
 

@@ -10,9 +10,11 @@ void initial( double * prim , double * x ){
    double phi = x[1];
 
    double v0 = 0.1;
-   double P0 = 10.0;
+   double P0 = 2.5;
    double R  = 1.0;
-   double n  = 6.0;
+   double n  = 5.0;
+
+   double sigma = 0.2;
 
    double X; 
    double omega;
@@ -31,7 +33,7 @@ void initial( double * prim , double * x ){
       rho = 2.0;
    }
 
-   double vr = v0*cos(n*phi)*exp(-80.*pow(r-R,2.));
+   double vr = v0*cos(n*phi)*exp(-.5*pow(r-R,2.)/sigma/sigma);
 
    prim[RHO] = rho;
    prim[PPP] = Pp;

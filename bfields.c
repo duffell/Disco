@@ -227,6 +227,8 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
    }
 }
 
+void make_edge_adjust( struct domain * , double );
+
 void update_B_fluxes( struct domain * theDomain , double dt ){
 
    struct face * theFaces = theDomain->theFaces_1;
@@ -293,9 +295,15 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
          n0 = Nf[jk];
       }
 
-      //THEN SOMEHOW DO AZIMUTHAL EDGES
+      if( NUM_AZ_EDGES == 4 ) make_edge_adjust( theDomain , dt );
    } 
+}
 
+void add_E_phi( double * phiL , double * phiR , double * phiD , double * phiU , double Edldt ){
+   *phiL -= Edldt;
+   *phiR += Edldt;
+   *phiU -= Edldt;
+   *phiD += Edldt;
 }
 
 double get_dp( double , double );
