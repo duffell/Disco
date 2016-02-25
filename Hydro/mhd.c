@@ -313,6 +313,27 @@ void visc_flux( double * prim , double * gprim , double * flux , double * x , do
 
 }
 
+void flux_to_E( double * Flux , double * Ustr , double * x , double * E1_riemann , double * B1_riemann , double * E2_riemann , double * B2_riemann , int dim ){
+
+   double r = x[0];
+
+   if( dim==0 ){
+      *E1_riemann = Flux[BRR]*r;   //Ez 
+      *B1_riemann = Ustr[BRR]*r*r; // r*Br
+      *E2_riemann = Flux[BZZ];    //Er 
+      *B2_riemann = Ustr[BZZ]*r;  //-r*Bz
+   }else if( dim==1 ){
+      *E1_riemann = -Flux[BPP]*r;  //Ez 
+      *B1_riemann = Ustr[BRR]*r*r; // r*Br
+      *E2_riemann = 1.0*Flux[BZZ];     //Ephi
+   }else{
+      *E1_riemann = -Flux[BPP]*r;   //Er 
+      *B1_riemann = Ustr[BZZ]*r;  //-r*Bz
+      *E2_riemann = 1.0*-Flux[BRR]*r;  //Ephi
+   }
+
+}
+
 void vel( double * prim1 , double * prim2 , double * Sl , double * Sr , double * Ss , double * n , double * x , double * Bpack ){
 /*
    double P1   = prim1[PPP];

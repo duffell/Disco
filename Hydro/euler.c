@@ -226,6 +226,12 @@ void visc_flux( double * prim , double * gprim , double * flux , double * x , do
 
 }
 
+void flux_to_E( double * Flux , double * Ustr , double * x , double * E1_riemann , double * B1_riemann , double * E2_riemann , double * B2_riemann , int dim ){
+
+   //Silence is Golden.
+
+}
+
 void vel( double * prim1 , double * prim2 , double * Sl , double * Sr , double * Ss , double * n , double * x , double * Bpack ){
 
    double r = x[0];
@@ -278,7 +284,7 @@ double mindt(double * prim , double w , double * xp , double * xm ){
    return( dt );
 
 }
-
+/*
 double getReynolds( double * prim , double w , double * x , double dx ){
 
    double r = x[0];
@@ -300,4 +306,4 @@ double getReynolds( double * prim , double w , double * x , double dx ){
    return(Re);
 
 }
-
+*/

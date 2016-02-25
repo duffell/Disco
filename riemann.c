@@ -31,7 +31,9 @@ void getUstar( double * , double * , double * , double , double , double * , dou
 void get_Ustar_HLLD( double , double * , double * , double * , double * , double , double * );
 void vel( double * , double * , double * , double * , double * , double * , double * , double * );
 double get_signed_dp( double , double );
+
 void visc_flux( double * , double * , double * , double * , double * );
+void flux_to_E( double * , double * , double * , double * , double * , double * , double * , int );
 
 void solve_riemann( double * , double * , double *, double * , double * , double * , double * , double * , double , double , int , double * , double * , double * , double * );
 
@@ -106,7 +108,6 @@ void riemann_trans( struct face * F , double dt , int dim ){
    double dAdt      = F->dA*dt;
    double dxL       = F->dxL;
    double dxR       = F->dxR;
-   double r         = F->cm[0];
    double phi       = F->cm[1];
 
    double primL[NUM_Q];
@@ -266,6 +267,8 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       consR[q] += (Flux[q] - w*Ustr[q])*dAdt;
    }
 
+   flux_to_E( Flux , Ustr , x , E1_riemann , B1_riemann , E2_riemann , B2_riemann , dim );
+/*
    if( use_B_fields && NUM_Q > BZZ ){
       if( dim==0 ){
          *E1_riemann = Flux[BRR]*r;   //Ez
@@ -282,7 +285,7 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
          *E2_riemann = 1.0*-Flux[BRR]*r;  //Ephi
       }
    }
-
+*/
 }
 
 
