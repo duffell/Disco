@@ -12,14 +12,14 @@ enum{C_FIXED,C_WCELL,C_WRIEMANN};
 #define MOVE_CELLS C_WCELL
 
 #define NUM_C 8
-#define NUM_N 0
+#define NUM_N 1
 #define NUM_Q (NUM_C+NUM_N)
 #define NUM_G 2
 
 //Magnetic field tracking things.  Can be set to zero if there is no MHD.
 #define NUM_EDGES 8    //0, 4 or 8 
 #define NUM_FACES 5    //0, 3 or 5
-#define NUM_AZ_EDGES 0 //0, 0 or 4
+#define NUM_AZ_EDGES 4 //0, 0 or 4
 
 struct param_list{
 
@@ -124,6 +124,19 @@ struct cell{
    double RK_Phi[NUM_FACES];
    double tempDoub;
 
+};
+
+struct edge{
+   struct cell * LU;
+   struct cell * RU;
+   struct cell * LD;
+   struct cell * RD;
+
+   int Prim_Zone;
+   int Alt_LR;
+   int Alt_UD;
+
+   double E_dl;
 };
 
 struct face{

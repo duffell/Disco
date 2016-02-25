@@ -187,13 +187,14 @@ int phi_switch( double dphi , double Pmax , int mode ){
    int LR = 0;
    if( dphi > 0.) LR = 1;
 
-   return( dphi );
+   return( LR );
+
 }
 
 int get_which4( double phi , double phiR , double phiU , double phiUR , int * LR_alt , int * UD_alt , int mode , double Pmax ){
 
-   int which4 = 0;
-   double dphi = 0.0;
+   int which4;
+   double dphi;
    
    dphi = phi - phiR;
    int LR_D = phi_switch( dphi , Pmax , mode );
@@ -217,15 +218,17 @@ int get_which4( double phi , double phiR , double phiU , double phiUR , int * LR
       else which4 = 3;
    }
 
-   if( which4 == 0 || which4 == 1 ) *LR_alt = LR_U;
-   else                             *LR_alt = LR_D;
+   if( mode == 0 ){
+      if( which4 == 0 || which4 == 1 ) *LR_alt = LR_U;
+      else                             *LR_alt = LR_D;
 
-   if( which4 == 0 || which4 == 2 ){
-      dphi = phiR - phiUR;
-      *UD_alt = phi_switch( dphi , Pmax , mode );
-   }else{
-      dphi = phi - phiU;
-      *UD_alt = phi_switch( dphi , Pmax , mode );
+      if( which4 == 0 || which4 == 2 ){
+         dphi = phiR - phiUR;
+         *UD_alt = phi_switch( dphi , Pmax , mode );
+      }else{
+         dphi = phi - phiU;
+         *UD_alt = phi_switch( dphi , Pmax , mode );
+      }
    }
 
    return( which4 );
@@ -397,6 +400,7 @@ void make_edge_adjust( struct domain * theDomain , double dt ){
             }
 
             double dl = get_dL( xp , xm , 0 );
+//if( e==0 ) printf("dl = %e which4 = %d, which4_back = %d, phip = %e phim = %e dphi=%e \n",dl,which4,which4_back,xp[1],xm[1],xp[1]-xm[1]);
             add_E_phi( PhiL , PhiR , PhiD , PhiU , E*dl*dt );
 
             if( which4 == 0 ){
