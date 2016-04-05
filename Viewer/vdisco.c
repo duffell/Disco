@@ -22,15 +22,15 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR 0    //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  5e-5 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
+#define VAL_FLOOR -3 //-2 //0.4    //0.95//0 //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  -1 //2 //0.7 //4.5e-3 //1.05//5.25e-21 //5.25e-9 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 6
 #define CAM_BACKUP  1.5
 
 static int WindowWidth  = 600;
 static int WindowHeight = 600;
-
+ 
 int CommandMode;
 int FullScreenMode=0;
 
@@ -47,11 +47,12 @@ int draw_planet = 0;
 int draw_scale = 0;
 int reflect  = 0;
 int valq=-1;
-int draw_border = 1;
-int logscale = 0;
+int draw_border = 0;
+int logscale = 1;
 int floors=1;
 int help_screen=0;
 int print_vals=0;
+int fix_zero=0;
 
 double rotate_angle = M_PI/2.;
 
@@ -117,6 +118,10 @@ void getMaxMin(void){
    if( FIXMAXMIN && floors ){
       maxval = VAL_CEIL;
       minval = VAL_FLOOR;
+   }
+   if( fix_zero ){
+      maxval = .5*(maxval-minval);
+      minval = -maxval;
    }
    //if( floors ) minval = maxval-5.0;
    //if( floors ) minval = log( getval( theZones[0][Np[0]-1] , q ) )/log(10.);
@@ -280,8 +285,8 @@ void DrawGLScene(){
    double RotationAngleY = 0.0;
    double RotationAngleZ = 0.0;
 
-   if( dim3d ) RotationAngleX = -60.0;
- 
+   if( dim3d==1 ) RotationAngleX = -60.0;
+   if( dim3d==2 ) RotationAngleX = -90.0;
  
    glTranslatef( 0.0 , 0.0 , -CAM_BACKUP );
 
@@ -336,7 +341,7 @@ void DrawGLScene(){
          double rm = r_jph[j-1];
          double rp = r_jph[j];
          double r = .5*(rp+rm); 
-         double val = pow(r,-1.5)/max_1d;//*pow(.5*(rp+rm),1.5);//2.*(theRadialData[j][q]-minval)/(maxval-minval) - 1.;//getval(theZones[i],q);         if( q==1 ) val *= 1e2;
+         double val = pow(r,-1.5)/max_1d;// *pow(.5*(rp+rm),1.5);//2.*(theRadialData[j][q]-minval)/(maxval-minval) - 1.;//getval(theZones[i],q);         if( q==1 ) val *= 1e2;
          val = 2.*val - 1.;
          double c0 = 2.*((.5*(rp+rm)-r_jph[-1])/(r_jph[Nr-1]-r_jph[-1]) - .5)/rescale;                 double c1 = val/rescale;
          glVertex3f( c0-xoff, c1-yoff, camdist-zoff+.001 );
@@ -406,42 +411,46 @@ void DrawGLScene(){
             float rrr,ggg,bbb;
             get_rgb( val , &rrr , &ggg , &bbb , cmap );
 
-            if( !dim3d || sin(phi)>0 || cos(phi+.25)<0.0 ){
+            //if( (!dim3d || (sin(phi)>0 || cos(phi+.25)<0.0)) && dim3d !=2 ){
+            if( dp < 1.5 && (!dim3d || (sin(phi)>0 && cos(phi)>0.0)) && dim3d !=2 ){
                if( !draw_border_now ){ 
                   glColor3f( rrr , ggg , bbb );
                   glBegin(GL_POLYGON);
                }else{
-                  glLineWidth(2.0f);
+                  glLineWidth(3.0f);
                   glColor3f(0.0,0.0,0.0);
                   glBegin(GL_LINE_LOOP);
                }
+
+               double z0 = 0.0;
+               if( dim3d ) z0 = z_kph[Nz-1]/rescale;
      
                double c0 = rm*cos(phim);
                double c1 = rm*sin(phim);
-               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff+z0 );
 
                c0 = rp*cos(phim);
                c1 = rp*sin(phim);
-               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff+z0 );
 
                c0 = rp*cos(phi)/cos(.5*dp);
                c1 = rp*sin(phi)/cos(.5*dp);
-               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff+z0 );
 
                c0 = rp*cos(phip);
                c1 = rp*sin(phip);
-               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff+z0 );
 
                c0 = rm*cos(phip);
                c1 = rm*sin(phip);
-               glVertex3f( c0-xoff, c1-yoff, camdist-zoff );
+               glVertex3f( c0-xoff, c1-yoff, camdist-zoff+z0 );
 
                glEnd();
             }
          }
          if( dim3d ){
             int k;
-            for( k=2 ; k<Nz/2 ; ++k ){
+            for( k=0 ; k<Nz ; ++k ){
                int jk = j*Nz+k;
                double rp = r_jph[j]/rescale;
                double rm = r_jph[j-1]/rescale;
@@ -471,20 +480,21 @@ void DrawGLScene(){
                   glVertex3f( rp*cos(phi) - xoff , rp*sin(phi) - yoff + zoff, zm );
                   glEnd();
             }
-            if( draw_border_now ){
+            if( draw_border_now || dim3d == 1 ){
                glLineWidth(2.0f);
                glColor3f(0.0,0.0,0.0);
                glBegin(GL_LINE_LOOP);
 
                double rp = r_jph[Nr-1]/rescale;
-               double rm =-r_jph[Nr-1]/rescale;
+               //double rm =-r_jph[Nr-1]/rescale;
+               double rm = r_jph[-1]/rescale;
                double zp = z_kph[Nz-1]/rescale;
                double zm = z_kph[  -1]/rescale;
 
-               glVertex3f( rp-xoff , 0.0 , zp );
-               glVertex3f( rm-xoff , 0.0 , zp );
-               glVertex3f( rm-xoff , 0.0 , zm );
-               glVertex3f( rp-xoff , 0.0 , zm );
+               glVertex3f( rp-xoff , -yoff+zoff , zp );
+               glVertex3f( rm-xoff , -yoff+zoff , zp );
+               glVertex3f( rm-xoff , -yoff+zoff , zm );
+               glVertex3f( rp-xoff , -yoff+zoff , zm );
                glEnd();
             }
          }
@@ -557,14 +567,18 @@ void DrawGLScene(){
       double Rmin = 0.5;
       double Rmax = 1.1;
       int k;
-      glLineWidth(4.0f);
-      glColor3f(1.0,1.0,1.0);
+      glLineWidth(3.0f);
+      glColor3f(0.0,0.0,0.0);
+      //glColor3f(1.0,1.0,1.0);
       glBegin(GL_LINE_LOOP);
       for( k=0 ; k<Nr ; ++k ){
          //double phi0 = ((double)k+.5)/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
          double x = ((double)k+.5)/(double)Nr;
-         double r = .001*pow(.5/.001,x);
-         double phi0 = p0-log(r/0.001)*Mach;//(3.-2.*sqrt(1./r)-r)*5.;
+         //double r = .001*pow(.5/.001,x);
+         double r = .5*pow(1.5/.5,x);
+         //double phi0 = p0-log(r/0.001)*Mach;//(3.-2.*sqrt(1./r)-r)*5.;
+         double phi0 = (3.-2.*sqrt(1./r)-r)*20.;
+         if( r<1. ) phi0 = -phi0;
 //         double x0 = rp + dr*cos(phi0);
 //         double y0 = dr*sin(phi0);
   
@@ -665,7 +679,7 @@ void keyPressed(unsigned char key, int x, int y)
    }
    if( key >= (int)'0' && key < (int)'1'+Nq ) valq = (int)key-(int)'1';
    if( key == 'b' ) draw_bar = !draw_bar;
-   if( key == 'd' ) dim3d = !dim3d;
+   if( key == 'd' ) {++dim3d; if(dim3d==3) dim3d=0;}
    if( key == 'f' ) floors = !floors;
    if( key == 'g' ) draw_border = !draw_border;
    if( key == 'h' ) help_screen = !help_screen;
@@ -702,6 +716,7 @@ void keyPressed(unsigned char key, int x, int y)
    }
    if( key == 'p' ) draw_planet = !draw_planet;
    if( key == 's' ) draw_spiral = !draw_spiral;
+   if( key == 'Z' ) fix_zero = !fix_zero;
    glutPostRedisplay();
 }
 
@@ -749,7 +764,8 @@ int main(int argc, char **argv)
    readSimple( filename , group1 , (char *)"r_jph" , r_jph , H5T_NATIVE_DOUBLE );
    readSimple( filename , group1 , (char *)"z_kph" , z_kph , H5T_NATIVE_DOUBLE );
 
-   midz = Nz/2;
+   //midz = Nz/2;
+   midz = Nz-1;
 
    int start[2]    = {0,0};
    int loc_size[2] = {Nr,Nz};
@@ -884,16 +900,20 @@ int main(int argc, char **argv)
    //offx = .5*(r_min+r_max)/rescale;
    //offy = 0.5;//.5*(r_min+r_max)*sin(thalf)/rescale;
    //offy = .5*(r_min+r_max)/rescale;
-   //rescale *= .35;
-   offy = 0.0;//0.5/rescale;
-   offx = 0.0;//1.0/rescale;
+   //rescale *= .5;
+   //rescale *= .4;
+   rescale *= 1.2;
+   //offy = 0.75/rescale;
+   //offx = 0.6/rescale;//0.0;//1.0/rescale;
+   offy = 0.0;
+   offx = 0.0;//2.5/rescale;//0.0;//1.0/rescale;
 
 //////////////////////////////
    glutInit(&argc, argv);  
    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH);  
    glutInitWindowSize(WindowWidth, WindowHeight);
    glutInitWindowPosition(0, 0);
-   window = glutCreateWindow("Flying Grid");
+   window = glutCreateWindow("DISCO Viewer");
    glutDisplayFunc(&DrawGLScene);  
    if(FullScreenMode) glutFullScreen();
    glutIdleFunc(&DrawGLScene);

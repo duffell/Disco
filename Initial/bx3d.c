@@ -7,8 +7,13 @@ void setICparams( struct domain * theDomain ){
 void initial( double * prim , double * x ){
 
    double r = x[0];
+   double phi = x[1];
    double z = x[2];
-   r = sqrt(r*r+z*z);
+
+   double x0 = r*cos(phi);//-.1;
+   double x1 = r*sin(phi);
+
+   r = sqrt(x0*x0+x1*x1+z*z);
 
    double rho  = 1.0;
    double Pp   = 0.1;

@@ -9,12 +9,12 @@ void initial( double * prim , double * x ){
    double r = x[0];
    double phi = x[1];
 
-   double v0 = 0.1;
-   double P0 = 2.5;
+   double v0 = 0.02;
+   double P0 = 4.0;
    double R  = 1.0;
-   double n  = 5.0;
+   double n  = 10.0;
 
-   double sigma = 0.2;
+   double sigma = 0.1;//0.2;//2.*M_PI/n;
 
    double X; 
    double omega;

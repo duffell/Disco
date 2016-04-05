@@ -39,6 +39,8 @@ void adjust_gas( struct planet * pl , double * x , double * prim , double gam ){
 
 void planetaryForce( struct planet * pl , double r , double phi , double z , double * fr , double * fp , double * fz , int mode ){
 
+   z = 0.0;
+
    double rp = pl->r;
    double pp = pl->phi;
    double cosp = cos(phi);

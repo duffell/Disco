@@ -16,14 +16,14 @@ void initial( double * prim , double * x ){
    double r = x[0];
 
    double rho = 1.0;
-   double Pp = rho/Mach/Mach/gam;
+   double Pp = rho/Mach/Mach;
    double omega02 = 1.0/pow(r,3.);
    double omegaP2 = 0.0;
 
    double omega = sqrt( omega02 - omegaP2 );
 
    double X = 0.0; 
-   if( r > 1.0 ) X = 1.0; 
+   if( r*cos(x[1]) > 0.0 ) X = 1.0; 
 
    prim[RHO] = rho;
    prim[PPP] = Pp;

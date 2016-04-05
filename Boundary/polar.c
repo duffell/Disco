@@ -6,6 +6,7 @@ void initial( double * , double * );
 double get_dV( double * , double * );
 void cons2prim( double * , double * , double * , double );
 void prim2cons( double * , double * , double * , double );
+double get_moment_arm( double * , double * );
 
 void boundary_trans( struct domain * theDomain , int dim ){
 
@@ -44,7 +45,11 @@ void boundary_trans( struct domain * theDomain , int dim ){
             for( i=0 ; i<Np[jk] ; ++i ){
                struct cell * c = &(theCells[jk][i]);
                double phi = c->piph - .5*c->dphi;
-               double x[3] = { .5*(r_jph[j]+r_jph[j-1]) , phi , .5*(z_kph[k]+z_kph[k-1]) };
+               double xp[3] = { r_jph[j]   , c->piph            , z_kph[k]   };
+               double xm[3] = { r_jph[j-1] , c->piph-.5*c->dphi , z_kph[k-1] };
+               double r = get_moment_arm( xp , xm );
+               double x[3] = { r , phi , .5*(z_kph[k]+z_kph[k-1]) };
+               //double x[3] = { .5*(r_jph[j]+r_jph[j-1]) , phi , .5*(z_kph[k]+z_kph[k-1]) };
                initial( c->prim , x ); 
             }    
          }    
@@ -58,7 +63,11 @@ void boundary_trans( struct domain * theDomain , int dim ){
             for( i=0 ; i<Np[jk] ; ++i ){
                struct cell * c = &(theCells[jk][i]);
                double phi = c->piph - .5*c->dphi;
-               double x[3] = { .5*(r_jph[j]+r_jph[j-1]) , phi , .5*(z_kph[k]+z_kph[k-1]) };
+               double xp[3] = { r_jph[j]   , c->piph            , z_kph[k]   };
+               double xm[3] = { r_jph[j-1] , c->piph-.5*c->dphi , z_kph[k-1] };
+               double r = get_moment_arm( xp , xm );
+               double x[3] = { r , phi , .5*(z_kph[k]+z_kph[k-1]) };
+               //double x[3] = { .5*(r_jph[j]+r_jph[j-1]) , phi , .5*(z_kph[k]+z_kph[k-1]) };
                initial( c->prim , x );
             }
          }

@@ -274,7 +274,9 @@ void source( double * prim , double * cons , double * xp , double * xm , double 
 
    double B2 = Br*Br+Bp*Bp+Bz*Bz;
  
-   double centrifugal = ( rho*omega*omega*r2_3 - Bp*Bp )/r_1*sin(.5*dphi)/(.5*dphi);
+   //double centrifugal = ( rho*omega*omega*r2_3 - Bp*Bp )/r_1*sin(.5*dphi)/(.5*dphi);
+   double centrifugal = ( rho*omega*omega*r2_3 )/r_1*sin(.5*dphi)/(.5*dphi);
+   centrifugal -= Bp*Bp/r_1;
    double press_bal   = (Pp+.5*B2)/r_1;
 
    cons[SRR] += dVdt*( centrifugal + press_bal );

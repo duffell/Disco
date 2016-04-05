@@ -1,0 +1,15 @@
+### Makefile.in for Disco ###
+
+# This file contains user-specified build options
+
+# Build options
+INITIAL  = flock
+HYDRO    = mhd
+BOUNDARY = fixed
+OUTPUT   = h5out
+RESTART  = h5in
+PLANETS  = sun
+
+METRIC   = flat_rpz
+FRAME    = normal
+

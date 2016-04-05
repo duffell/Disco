@@ -169,7 +169,7 @@ void B_faces_to_cells( struct domain * theDomain , int type ){
          }
       }
 
-      if( NUM_FACES == 5 ){
+      if( NUM_FACES == 5 && Nz>1 ){
          for( j=0 ; j<Nr ; ++j ){
             for( k=0 ; k<Nz ; ++k ){
                int jk = j+Nr*k;
@@ -295,7 +295,7 @@ void update_B_fluxes( struct domain * theDomain , double dt ){
          n0 = Nf[jk];
       }
 
-      if( NUM_AZ_EDGES == 4 ) make_edge_adjust( theDomain , dt );
+      if( NUM_AZ_EDGES == 4 && theDomain->Nz>1 ) make_edge_adjust( theDomain , dt );
    } 
 }
 
@@ -462,7 +462,7 @@ void avg_Efields( struct domain * theDomain ){
       double B = 0.0;
       for( i=0 ; i<Np[jk] ; ++i ){
          struct cell * c = theCells[jk]+i;
-         E += c->E[0]/(double)Np[jk];
+         E += c->E[1]/(double)Np[jk];
       //   B += c->B[0]/(double)Np[jk];
       }
       for( i=0 ; i<Np[jk] ; ++i ){
@@ -495,10 +495,6 @@ void avg_Efields( struct domain * theDomain ){
             }
          }
       }
-   }
-
-   if( NUM_AZ_EDGES == 4 ){
-//AVERAGE E_PHI SOMEHOW
    }
 
 }
@@ -535,11 +531,21 @@ void subtract_advective_B_fluxes( struct domain * theDomain ){
 
 double get_signed_dp( double , double );
 
-void check_flipped( struct domain * theDomain ){
+void check_flipped( struct domain * theDomain , int dim ){
 
-   struct face * theFaces = theDomain->theFaces_1;
-   int * fI = theDomain->fIndex_r;
-   int Nf_t = theDomain->N_ftracks_r;
+   struct face * theFaces;
+   int * fI;
+   int Nf_t;
+
+   if( dim==0 ){
+      theFaces = theDomain->theFaces_1;
+      fI = theDomain->fIndex_r;
+      Nf_t = theDomain->N_ftracks_r;
+   }else{
+      theFaces = theDomain->theFaces_2;
+      fI = theDomain->fIndex_z;
+      Nf_t = theDomain->N_ftracks_z;
+   }
 
    int n;
    int n0 = 0; 
@@ -570,23 +576,42 @@ void check_flipped( struct domain * theDomain ){
 
 }
 
-void get_phi_pointer( struct face * f , double ** P , double ** RK_P ){
+void get_phi_pointer( struct face * f , double ** P , double ** RK_P , int dim ){
 
-   if( f->LRtype == 0 ){ 
-      *P    = &(f->L->Phi[2]);
-      *RK_P = &(f->L->RK_Phi[2]);
+   if( dim==0 ){
+      if( f->LRtype == 0 ){ 
+         *P    = &(f->L->Phi[2]);
+         *RK_P = &(f->L->RK_Phi[2]);
+      }else{
+         *P    = &(f->R->Phi[1]);
+         *RK_P = &(f->R->RK_Phi[1]);
+      }
    }else{
-      *P    = &(f->R->Phi[1]);
-      *RK_P = &(f->R->RK_Phi[1]);
+      if( f->LRtype == 0 ){ 
+         *P    = &(f->L->Phi[4]);
+         *RK_P = &(f->L->RK_Phi[4]);
+      }else{
+         *P    = &(f->R->Phi[3]);
+         *RK_P = &(f->R->RK_Phi[3]);
+      }  
    }
 
 }
 
-void flip_fluxes( struct domain * theDomain ){
+void flip_fluxes( struct domain * theDomain , int dim ){
 
-   struct face * theFaces = theDomain->theFaces_1;
-   int * fI = theDomain->fIndex_r;
-   int Nf_t = theDomain->N_ftracks_r;
+   struct face * theFaces;
+   int * fI;
+   int Nf_t;
+   if( dim==0 ){
+      theFaces = theDomain->theFaces_1;
+      fI = theDomain->fIndex_r;
+      Nf_t = theDomain->N_ftracks_r;
+   }else{
+      theFaces = theDomain->theFaces_2;
+      fI = theDomain->fIndex_z;
+      Nf_t = theDomain->N_ftracks_z;
+   }
 
    int n;
    int n0 = 0;
@@ -605,9 +630,9 @@ void flip_fluxes( struct domain * theDomain ){
 
             double *P, *Pm, *Pp, *RK_P, *RK_Pm, *RK_Pp;
 
-            get_phi_pointer( f  , &P  , &RK_P  );
-            get_phi_pointer( fm , &Pm , &RK_Pm );
-            get_phi_pointer( fp , &Pp , &RK_Pp );
+            get_phi_pointer( f  , &P  , &RK_P  , dim );
+            get_phi_pointer( fm , &Pm , &RK_Pm , dim );
+            get_phi_pointer( fp , &Pp , &RK_Pp , dim );
 
             double Phi = *P;
             double RK_Phi = *RK_P;

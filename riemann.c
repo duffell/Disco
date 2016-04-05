@@ -15,11 +15,11 @@ void setRiemannParams( struct domain * theDomain ){
    visc_flag = theDomain->theParList.visc_flag;
    use_B_fields = set_B_flag();
 
-   if( !use_B_fields && riemann_solver == _HLLD_ ){
+   if( !use_B_fields && riemann_solver == _HLLD_ && theDomain->rank==0 ){
       printf("Ya dun goofed.\nRiemann Solver = HLLD,\nHydro does not include magnetic fields.\n");
       exit(1);
    }
-   if( !use_B_fields && (NUM_C > 5 || NUM_EDGES > 0 || NUM_FACES > 0 || NUM_AZ_EDGES > 0 ) ){
+   if( !use_B_fields && (NUM_C > 5 || NUM_EDGES > 0 || NUM_FACES > 0 || NUM_AZ_EDGES > 0 ) && theDomain->rank==0 ){
       printf("Warning:  You are not solving MHD equations but possibly storing more variables than you need.\nNum Conserved Vars = %d\nFaces = %d\nEdges = %d\nAzimuthal Edges = %d\nCode might still work fine, this is just a warning.\n",NUM_C,NUM_FACES,NUM_EDGES,NUM_AZ_EDGES);
    }
 

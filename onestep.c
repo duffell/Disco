@@ -22,8 +22,8 @@ void add_source( struct domain * , double dt );
 void avg_Efields( struct domain * );
 void update_B_fluxes( struct domain * , double );
 void subtract_advective_B_fluxes( struct domain * );
-void check_flipped( struct domain * );
-void flip_fluxes( struct domain * );
+void check_flipped( struct domain * , int );
+void flip_fluxes( struct domain * , int );
 
 void movePlanets( struct planet * , double , double );
 int planet_motion_analytic(void);
@@ -64,8 +64,12 @@ void onestep( struct domain * theDomain , double RK , double dt , int first_step
    if( first_step ){
       move_cells( theDomain , dt );
       if( bflag ){
-         check_flipped( theDomain );
-//         flip_fluxes( theDomain );
+         check_flipped( theDomain , 0 );
+         flip_fluxes( theDomain , 0 );
+         if( Nz>1 ){
+            check_flipped( theDomain , 1 );
+            flip_fluxes( theDomain , 1 );
+         }
       }
    }
 

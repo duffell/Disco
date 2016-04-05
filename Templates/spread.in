@@ -1,0 +1,15 @@
+### Makefile.in for Disco ###
+
+# This file contains user-specified build options
+
+# Build options
+INITIAL  = spread
+HYDRO    = euler
+BOUNDARY = fixed
+OUTPUT   = ascii
+RESTART  = h5in
+PLANETS  = sun
+
+METRIC   = flat_rpz
+FRAME    = normal
+

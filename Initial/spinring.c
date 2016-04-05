@@ -10,8 +10,8 @@ void initial( double * prim , double * x ){
    double phi = x[1];
    double z   = x[2];
 
-   double Rl = 0.5;
-   double B0 = 0.0001;
+   double Rl = 0.45;
+   double B0 = 1e-10;//1e-6;//0.0001;
    double Om = 1.0;
    double P0 = 1.0;
 

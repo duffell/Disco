@@ -1,24 +1,15 @@
 
 #include "../paul.h"
+ 
+static int ranky=0;
 
 void setICparams( struct domain * theDomain ){
+   ranky = theDomain->rank;
 }
 
 void initial( double * prim , double * x ){
-   double r = x[0];
-   double z = x[2];
-   r = sqrt(r*r+z*z);
-
-   double rho = 1.0;
-   double Pp  = 1.0;
-
-   if( r>0.5 ){
-      rho = 0.125;
-      Pp  = 0.1;
-   }
-
-   prim[RHO] = rho;
-   prim[PPP] = Pp;
+   prim[RHO] = 1.0+(double)ranky;
+   prim[PPP] = 1.0;
    prim[URR] = 0.0;
    prim[UPP] = 0.0;
    prim[UZZ] = 0.0;

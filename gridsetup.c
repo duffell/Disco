@@ -81,7 +81,8 @@ void setupGrid( struct domain * theDomain ){
          int jk = j+Nr*k;
          double dp = dr/rp*aspect;
          int Np = (int)(Pmax/dp);
-         if( Np<2 ) Np=2;
+         if( Np<4 ) Np=4;
+//         if( Np<40 ) Np=40;
          theDomain->Np[jk] = Np;
       }
    }
