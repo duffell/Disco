@@ -8,9 +8,9 @@ void setDiskParams( struct domain * theDomain ){
 }
 
 double mesh_om( double r ){
-//   double n = 8.0;
-//   double omega = 1./pow( pow( r , 1.5*n ) + 1. , 1./n );
-   double omega = pow(r,-1.5);
+   double n = 8.0;
+   double omega = 1./pow( pow( r , 1.5*n ) + 1. , 1./n );
+//   double omega = pow(r,-1.5);
 //   double omega = 1.0;
    return( omega );
 }
