@@ -25,8 +25,10 @@
 #define VAL_FLOOR -3 //-2 //0.4    //0.95//0 //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
 #define VAL_CEIL  -1 //2 //0.7 //4.5e-3 //1.05//5.25e-21 //5.25e-9 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
-#define COLORMAX 6
+#define COLORMAX 7
 #define CAM_BACKUP  1.5
+#define ZRORDER 1 // 1: checkpoints organized with faster index r (default,new)
+                  // 0: checkpoints organized with slower index r (old)
 
 static int WindowWidth  = 600;
 static int WindowHeight = 600;
@@ -34,7 +36,7 @@ static int WindowHeight = 600;
 int CommandMode;
 int FullScreenMode=0;
 
-int dim3d = 1;
+int dim3d = 0;
 int t_off = 0;
 int p_off = 0;
 int cmap = 4;
@@ -48,8 +50,8 @@ int draw_scale = 0;
 int reflect  = 0;
 int valq=-1;
 int draw_border = 0;
-int logscale = 1;
-int floors=1;
+int logscale = 0;
+int floors=0;
 int help_screen=0;
 int print_vals=0;
 int fix_zero=0;
@@ -103,7 +105,11 @@ void getMaxMin(void){
       }
       if( dim3d ){
          for( k=0 ; k<Nz ; ++k ){
-            int jk = j*Nz+k;
+            int jk;
+            if(ZRORDER)
+                jk = k*Nr+j;
+            else
+                jk = j*Nz+k;
             val = getval( rzZones[jk], q );
             if( logscale ) val = log(val)/log(10.);
             if( maxval < val ) maxval = val;
@@ -451,7 +457,11 @@ void DrawGLScene(){
          if( dim3d ){
             int k;
             for( k=0 ; k<Nz ; ++k ){
-               int jk = j*Nz+k;
+               int jk;
+               if(ZRORDER)
+                  jk = k*Nr+j;
+               else
+                  jk = j*Nz+k;
                double rp = r_jph[j]/rescale;
                double rm = r_jph[j-1]/rescale;
                double zp = z_kph[k]/rescale;
@@ -768,8 +778,13 @@ int main(int argc, char **argv)
    midz = Nz-1;
 
    int start[2]    = {0,0};
-   int loc_size[2] = {Nr,Nz};
-   int glo_size[2] = {Nr,Nz};
+   int loc_size[2] = {Nz,Nr};
+   int glo_size[2] = {Nz,Nr};
+   if(!ZRORDER)
+   {
+       loc_size[0] = Nr; loc_size[1] = Nz;
+       glo_size[0] = Nr; glo_size[1] = Nz;
+   }
 
    int Np_All[Nr*Nz];
    int Tindex_All[Nr*Nz];
@@ -782,7 +797,9 @@ int main(int argc, char **argv)
    int i,j,k;
    for( j=0 ; j<Nr ; ++j ){
       k = midz;
-      int jk = j*Nz+k;
+      int jk = k*Nr+j;
+      if(!ZRORDER)
+          jk = j*Nz+k;
       Np[j]     = Np_All[jk];
       Tindex[j] = Tindex_All[jk];
    }
@@ -835,6 +852,7 @@ int main(int argc, char **argv)
    for( j=0 ; j<Nr ; ++j ){
       loc_size[0] = Np[j];
       start[0] = Tindex[j];
+
       double TrackData[Np[j]*(Nq+1)];
       readPatch( filename , group2 , (char *)"Cells" , TrackData , H5T_NATIVE_DOUBLE , 2 , start , loc_size , glo_size);
       for( i=0 ; i<Np[j] ; ++i ){
@@ -847,12 +865,25 @@ int main(int argc, char **argv)
    printf("theZones built\n");
 
    loc_size[0] = 1;
-   for( j=0 ; j<Nr ; ++j ){
-      for( k=0 ; k<Nz ; ++k ){
-         int jk = j*Nz+k;
-         start[0] = Id_phi0[jk];
-         readPatch( filename , group2 , (char *)"Cells" , rzZones[jk] , H5T_NATIVE_DOUBLE , 2 , start , loc_size , glo_size );
-      }
+   if(ZRORDER)
+   {
+       for( k=0 ; k<Nz ; ++k ){
+          for( j=0 ; j<Nr ; ++j ){
+             int jk = k*Nr+j;
+             start[0] = Id_phi0[jk];
+             readPatch( filename , group2 , (char *)"Cells" , rzZones[jk] , H5T_NATIVE_DOUBLE , 2 , start , loc_size , glo_size );
+          }
+       }
+   }
+   else
+   {
+       for( j=0 ; j<Nr ; ++j ){
+          for( k=0 ; k<Nz ; ++k ){
+             int jk = j*Nz+k;
+             start[0] = Id_phi0[jk];
+             readPatch( filename , group2 , (char *)"Cells" , rzZones[jk] , H5T_NATIVE_DOUBLE , 2 , start , loc_size , glo_size );
+          }
+       }
    }
    printf("rzZones built\n");
 
