@@ -22,8 +22,8 @@
 /* ASCII code for the escape key. */
 #define ESCAPE 27
 
-#define VAL_FLOOR -3 //-2 //0.4    //0.95//0 //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  -1 //2 //0.7 //4.5e-3 //1.05//5.25e-21 //5.25e-9 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
+#define VAL_FLOOR -1   //0.95//0 //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  1 //4.5e-3 //1.05//5.25e-21 //5.25e-9 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 7
 #define CAM_BACKUP  1.5
@@ -48,7 +48,7 @@ int draw_jet = 0;
 int draw_planet = 0;
 int draw_scale = 0;
 int reflect  = 0;
-int valq=-1;
+int valq=0;
 int draw_border = 0;
 int logscale = 0;
 int floors=0;
@@ -569,6 +569,7 @@ void DrawGLScene(){
    }
 
    if( draw_spiral ){
+
       double rp   = 5.0;//thePlanets[1][0];
       double Mach = 3.65;
       double p0 = 1.2;
@@ -584,11 +585,12 @@ void DrawGLScene(){
       for( k=0 ; k<Nr ; ++k ){
          //double phi0 = ((double)k+.5)/(double)Nr*2.*M_PI;//(3.-2.*sqrt(1./r)-r)*20.;
          double x = ((double)k+.5)/(double)Nr;
-         //double r = .001*pow(.5/.001,x);
-         double r = .5*pow(1.5/.5,x);
-         //double phi0 = p0-log(r/0.001)*Mach;//(3.-2.*sqrt(1./r)-r)*5.;
-         double phi0 = (3.-2.*sqrt(1./r)-r)*20.;
-         if( r<1. ) phi0 = -phi0;
+         double r = .001*pow(.5/.001,x);
+         //double r = .5*pow(1.5/.5,x);
+         double phi0 = p0-log(r/0.001)*Mach;//(3.-2.*sqrt(1./r)-r)*5.;
+         //double phi0 = (3.-2.*sqrt(1./r)-r)*20.;
+         //if( r<1. ) phi0 = -phi0;
+
 //         double x0 = rp + dr*cos(phi0);
 //         double y0 = dr*sin(phi0);
   
@@ -610,6 +612,8 @@ void DrawGLScene(){
          }
       }
       glEnd();
+
+
 /*
       e += 0.01;
       glBegin(GL_LINE_LOOP);
@@ -863,7 +867,7 @@ int main(int argc, char **argv)
       }
    }
    printf("theZones built\n");
-
+/**/
    loc_size[0] = 1;
    if(ZRORDER)
    {
@@ -885,6 +889,7 @@ int main(int argc, char **argv)
           }
        }
    }
+/**/
    printf("rzZones built\n");
 
    start[1] = 0;

@@ -27,8 +27,10 @@ void initial( double * prim , double * x ){
    //double omega = ( pow( r , n-1.5 ) + 1. )/( pow( r , n ) + 1. );
    //double omega = 1./pow( pow( r , 1.5*n ) + 0.3 , 1./n );
    double omega2  = pow( r , -3. );
-   double omega2P = cs2/r/r;
+   double omega2P = 0.0*cs2/r/r;
    double omega = sqrt( omega2 - omega2P );
+
+   if( omega > 1. ) omega = 1.;
 
    double X = 0.0; 
    if( r > 1.0 ) X = 1.0; 

@@ -32,14 +32,14 @@ void initializePlanets( struct planet * thePlanets ){
    thePlanets[0].omega = om; 
    thePlanets[0].r     = a*mu; 
    thePlanets[0].phi   = M_PI; 
-   thePlanets[0].eps   = smooth + 1.0;//0.025; 
+   thePlanets[0].eps   = smooth;// + 1.0;//0.025; 
 
    thePlanets[1].M     = mu;  
    thePlanets[1].vr    = 0.0; 
    thePlanets[1].omega = om;  
    thePlanets[1].r     = a*(1.-mu); 
    thePlanets[1].phi   = 0.0; 
-   thePlanets[1].eps   = smooth + 1.0;//0.025;
+   thePlanets[1].eps   = smooth;// + 1.0;//0.025;
 
 }
 
