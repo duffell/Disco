@@ -37,7 +37,7 @@ void setupDomain( struct domain * theDomain ){
    theDomain->thePlanets = (struct planet *) malloc( Npl*sizeof(struct planet) );
    initializePlanets( theDomain->thePlanets );
 
-   double num_tools = num_diagnostics();
+   int num_tools = num_diagnostics();
    theDomain->num_tools = num_tools;
    theDomain->theTools.t_avg = 0.0;
    theDomain->theTools.Qr = (double *) malloc( Nr*num_tools*sizeof(double) );
@@ -132,13 +132,16 @@ void setupCells( struct domain * theDomain ){
             double dV = get_dV( xp , xm );
             double phi = c->piph-.5*c->dphi;
             double x[3] = { r , phi , .5*(z_kph[k]+z_kph[k-1])};
-            if( !restart_flag ) initial( c->prim , x );
-            subtract_omega( c->prim ); 
-            if( atmos ){
-               int p;
-               for( p=0 ; p<Npl ; ++p ){
-                  double gam = theDomain->theParList.Adiabatic_Index;
-                  adjust_gas( theDomain->thePlanets+p , x , c->prim , gam );
+            if( !restart_flag )
+            {
+               initial( c->prim , x );
+               subtract_omega( c->prim ); 
+               if( atmos ){
+                  int p;
+                  for( p=0 ; p<Npl ; ++p ){
+                     double gam = theDomain->theParList.Adiabatic_Index;
+                     adjust_gas( theDomain->thePlanets+p , x , c->prim , gam );
+                  }
                }
             }
             prim2cons( c->prim , c->cons , x , dV );
