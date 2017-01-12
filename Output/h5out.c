@@ -120,9 +120,16 @@ void output( struct domain * theDomain , char * filestart ){
    int jmax = Nr;
    if( dim_rank[0] != dim_size[0]-1 ) jmax = Nr-Ng;
    int kmin = 0;
-   if( dim_rank[1] != 0 || Z_Periodic ) kmin = Ng;
+   //if( dim_rank[1] != 0 || Z_Periodic ) kmin = Ng;
+   if( dim_rank[1] != 0 ) kmin = Ng;
    int kmax = Nz;
-   if( dim_rank[1] != dim_size[1]-1 || Z_Periodic ) kmax = Nz-Ng;
+   //if( dim_rank[1] != dim_size[1]-1 || Z_Periodic ) kmax = Nz-Ng;
+   if( dim_rank[1] != dim_size[1]-1 ) kmax = Nz-Ng;
+
+   if(Z_Periodic)
+   {
+       Nz_Tot += 2*Ng;
+   }
 
    int Ntot = 0;
    int j,k;
@@ -287,7 +294,7 @@ void output( struct domain * theDomain , char * filestart ){
          if( dim_rank[0] == 0 ){
             int offset = Ng;
             if( dim_rank[1] == 0 ) offset = 0;
-            if( Z_Periodic && dim_rank[1] == 0 ) offset += Ng;
+            //if( Z_Periodic && dim_rank[1] == 0 ) offset += Ng;
             int start1[1]    = {k0};
             int loc_size1[1] = {kSize};
             if( dim_rank[1] == dim_size[1]-1 ) loc_size1[0]++;
