@@ -75,10 +75,11 @@ void writePatch( char * file , char * group , char * dset , void * data , hid_t 
 }
 
 int Cell2Doub( struct cell * c , double * Q , int mode ){
-   if( mode==0 ) return(NUM_Q+1); else{
+   if( mode==0 ) return(NUM_Q+NUM_FACES+1); else{
       int q;
       for( q=0 ; q<NUM_Q ; ++q ) Q[q] = c->prim[q];
-      Q[NUM_Q] = c->piph;
+      for( q=0 ; q<NUM_FACES ; ++q ) Q[NUM_Q+q] = c->Phi[q];
+      Q[NUM_Q+NUM_FACES] = c->piph;
       return(0);
    }
 }
@@ -150,8 +151,8 @@ void output( struct domain * theDomain , char * filestart ){
       createDataset(filename,"Grid","r_jph",1,fdims1,H5T_NATIVE_DOUBLE);
       fdims1[0] = Nz_Tot+1;
       createDataset(filename,"Grid","z_kph",1,fdims1,H5T_NATIVE_DOUBLE);
-      fdims2[0] = Nr_Tot;
-      fdims2[1] = Nz_Tot;
+      fdims2[0] = Nz_Tot;
+      fdims2[1] = Nr_Tot;
       createDataset(filename,"Grid","Index",2,fdims2,H5T_NATIVE_INT);
       createDataset(filename,"Grid","Np",2,fdims2,H5T_NATIVE_INT);
       createDataset(filename,"Grid","Id_phi0",2,fdims2,H5T_NATIVE_INT);
@@ -216,11 +217,10 @@ void output( struct domain * theDomain , char * filestart ){
    int * Id_phi0 = (int *) malloc( jSize*kSize*sizeof(int) );
    double * Qwrite = (double *) malloc( myNtot*Ndoub*sizeof(double) );
 
-
    int index = 0;
    for( k=kmin ; k<kmax ; ++k ){
       for( j=jmin ; j<jmax ; ++j ){
-         int jk = (j-jmin)*kSize + (k-kmin);
+         int jk = (k-kmin)*jSize + (j-jmin);
          Index[jk] = index;
          Size[jk] = Np[j+Nr*k];
  
@@ -259,12 +259,12 @@ void output( struct domain * theDomain , char * filestart ){
          int glo_size2[2] = {Ntot,Ndoub};
          writePatch( filename , "Data" , "Cells" , Qwrite , H5T_NATIVE_DOUBLE , 2 , start2 , loc_size2 , glo_size2 );
          //Write Indices and Sizes for each radial track
-         start2[0] = j0;
-         start2[1] = k0;
-         loc_size2[0] = jSize;
-         loc_size2[1] = kSize;
-         glo_size2[0] = Nr_Tot;
-         glo_size2[1] = Nz_Tot;
+         start2[0] = k0;
+         start2[1] = j0;
+         loc_size2[0] = kSize;
+         loc_size2[1] = jSize;
+         glo_size2[0] = Nz_Tot;
+         glo_size2[1] = Nr_Tot;
          writePatch( filename , "Grid" , "Index"   , Index   , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
          writePatch( filename , "Grid" , "Np"      , Size    , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
          writePatch( filename , "Grid" , "Id_phi0" , Id_phi0 , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
