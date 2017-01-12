@@ -70,7 +70,8 @@ void readPatch( char * file , char * group , char * dset , void * data , hid_t t
 void Doub2Cell( double * Q , struct cell * c ){
    int q;
    for( q=0 ; q<NUM_Q ; ++q ) c->prim[q] = Q[q];
-   c->piph = Q[NUM_Q];
+   for( q=0 ; q<NUM_FACES ; ++q ) c->Phi[q] = Q[NUM_Q+q];
+   c->piph = Q[NUM_Q+NUM_FACES];
 }
 
 int getN0( int , int , int );
@@ -116,8 +117,8 @@ void restart( struct domain * theDomain ){
    if(rank==0){
       readSimple( filename , group1 ,"T", &tstart , H5T_NATIVE_DOUBLE );
       getH5dims( filename , group1 ,"Index", dims );
-      NUM_R = dims[0];
-      NUM_Z = dims[1];
+      NUM_Z = dims[0];
+      NUM_R = dims[1];
    }
    MPI_Bcast( &NUM_R  , 1 , MPI_INT    , 0 , theDomain->theComm );
    MPI_Bcast( &NUM_Z  , 1 , MPI_INT    , 0 , theDomain->theComm );
@@ -184,11 +185,15 @@ void restart( struct domain * theDomain ){
 
       //Read the indexing information so you know how to read in
       //The radial tracks of data which are coming up...
-      int start2[2]   = {N0r,N0z};
-      int loc_size2[2] = {Nr,Nz};
-      int glo_size2[2] = {NUM_R,NUM_Z};
+      int start2[2]   = {N0z,N0r};
+      int loc_size2[2] = {Nz,Nr};
+      int glo_size2[2] = {NUM_Z,NUM_R};
       int Np[Nr*Nz];
       int Index[Nr*Nz];
+
+      printf("%d %d\n", NUM_Z, NUM_R);
+      printf("%d %d\n", Nz, Nr);
+      printf("%d %d\n", N0z, N0r);
 
       readPatch( filename , group1 ,"Np"   , Np    , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
       readPatch( filename , group1 ,"Index", Index , H5T_NATIVE_INT , 2 , start2 , loc_size2 , glo_size2 );
@@ -202,8 +207,8 @@ void restart( struct domain * theDomain ){
       //you don't really know where the different radial
       //tracks belong in memory, they might not be 
       //contiguous, and they definitely are not in a rectangular block.
-      for( j=0 ; j<Nr ; ++j ){
-         for( k=0 ; k<Nz ; ++k ){
+      for( k=0 ; k<Nz ; ++k ){
+         for( j=0 ; j<Nr ; ++j ){
             int jk = j+Nr*k;
             start2[0] = Index[jk];
             start2[1] = 0;
@@ -224,7 +229,7 @@ void restart( struct domain * theDomain ){
    }
    MPI_Barrier(theDomain->theComm);
    }
-   if( Nq != NUM_Q+1 ){ if(rank==0)printf("Ummm, I got an hdf5 read error. Check NUM_Q.\n"); exit(1); }
+   if( Nq != NUM_Q+NUM_FACES+1 ){ if(rank==0)printf("Ummm, I got an hdf5 read error. Check NUM_Q.\n"); exit(1); }
 
    setPlanetParams( theDomain );
    int Npl = theDomain->Npl;
