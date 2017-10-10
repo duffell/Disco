@@ -192,6 +192,12 @@ void source( double * prim , double * cons , double * xp , double * xm , double 
  
    if( include_viscosity ){
       double nu = explicit_viscosity;
+      if( alpha_flag ){
+         double alpha = explicit_viscosity;
+         double c = sqrt( gamma_law*prim[PPP]/prim[RHO] );
+         double h = c*pow( r_1 , 1.5 );
+         nu = alpha*c*h;
+      }
       cons[SRR] += -dVdt*nu*rho*vr/(r_1*r_1);
    }
 
@@ -280,7 +286,26 @@ double mindt(double * prim , double w , double * xp , double * xm ){
    double dt = dtr;
    if( dt > dtp ) dt = dtp;
    if( dt > dtz ) dt = dtz;
+/*
+   double dL0 = get_dL(xp,xm,0);
+   double dL1 = get_dL(xp,xm,1);
+   double dL2 = get_dL(xp,xm,2);
+   double dx = dL0;
+   if( dx>dL1 ) dx = dL1;
+   if( dx>dL2 ) dx = dL2;
 
+   double nu = explicit_viscosity;
+
+   if( alpha_flag ){
+      double alpha = explicit_viscosity;
+      double c = sqrt( gamma_law*prim[PPP]/prim[RHO] );
+      double h = c*pow( r , 1.5 );
+      nu = alpha*c*h;
+   }
+
+   double dt_visc = .03*dx*dx/nu;
+   if( dt > dt_visc ) dt = dt_visc;
+*/
    return( dt );
 
 }
