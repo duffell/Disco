@@ -10,7 +10,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <fstream>
+//C++ to C
+//#include <fstream>
+#include <string.h>
 
 #include <hdf5.h>
 
@@ -258,26 +260,27 @@ void ReSizeGLScene(int Width, int Height)
 void TakeScreenshot(const char *useless){
    int dimx = WindowWidth;
    int dimy = WindowHeight;
-   printf("Writing out.ppm... ");
-   float *pixels = new float[3*dimx*dimy];
-   glReadBuffer(GL_BACK);
-   glPixelStorei(GL_PACK_ALIGNMENT,1);
-   glReadPixels(0, 0, dimx, dimy, GL_RGB, GL_FLOAT, pixels);
+   printf("Writing test.ppm... ");
+   float pixels[3*dimx*dimy];
 
-   char *filename = (char *)"out.ppm";
-   std::ofstream fp(filename);
-   fp << "P3\n" << dimx << " " << dimy << std::endl << "255\n";
-   int i,j;
-   for( i=dimy-1; i>=0; i--){    
-      for( j=0; j<dimx; ++j ){    
+   glReadBuffer(GL_BACK);
+   glPixelStorei(GL_PACK_ALIGNMENT,1); // byte aligned output 
+   glReadPixels(720-dimx/2, 450-dimy/2, dimx, dimy, GL_RGB, GL_FLOAT, pixels);
+
+   FILE * pFile = fopen("test.ppm","w");
+   fprintf(pFile,"P3\n%d %d\n255\n",dimx,dimy);
+
+   int i,j; 
+   for( i=dimy-1 ; i>=0 ; i--){
+      for( j=0 ; j<dimx ; j++ ){
          int pixelPos = (i*dimx+j)*3;
          int r = (int)(pixels[pixelPos+0]*255.0);
          int g = (int)(pixels[pixelPos+1]*255.0);
          int b = (int)(pixels[pixelPos+2]*255.0);
-         fp << r << " " << g << " " << b << std::endl;
+         fprintf(pFile,"%d %d %d\n",r,g,b);
       }    
-   }    
-   fp.close();
+   }
+   fclose(pFile);
    printf("done!\n");
 }
 
