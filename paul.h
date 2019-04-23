@@ -12,7 +12,7 @@ enum{C_FIXED,C_WCELL,C_WRIEMANN};
 #define MOVE_CELLS C_WCELL
 
 #define NUM_C 5
-#define NUM_N 0
+#define NUM_N 1
 #define NUM_Q (NUM_C+NUM_N)
 #define NUM_G 2
 
@@ -50,6 +50,7 @@ struct param_list{
    double Mass_Ratio;
    double Eccentricity;
    double Drift_Rate,Drift_Exp;
+   double acc_rate;
    int alpha_flag;
 
    int restart_flag;

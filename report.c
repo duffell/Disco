@@ -2,6 +2,7 @@
 #include "paul.h"
 
 void planetaryForce( struct planet * , double , double , double , double * , double * , double * , int );
+void planetarySink( struct planet * , double , double , double , double * );
 
 double get_dV( double * , double * );
 
@@ -25,6 +26,8 @@ void report( struct domain * theDomain ){
 
    double r_p = 0.0;
    if( Npl > 1 ) r_p = thePlanets[1].r;
+   double q = 0.0;
+   if( Npl > 1 ) q = ( thePlanets[1].M / thePlanets[0].M );
 
    double * r_jph = theDomain->r_jph;
    double * z_kph = theDomain->z_kph;
@@ -56,6 +59,10 @@ void report( struct domain * theDomain ){
    double rhoavg_min = HUGE_VAL;
    double Mass = 0.0;
    double Mdot = 0.0;
+   double Mdot1 = 0.0;
+   double Mdot2 = 0.0;
+   double Jdot1 = 0.0;
+   double Jdot2 = 0.0;
 
    double BrBp = 0.0;
    double PdV  = 0.0;
@@ -79,12 +86,15 @@ void report( struct domain * theDomain ){
             double phi = c->piph - .5*c->dphi;
             double Pp  = c->prim[PPP];
             double rho = c->prim[RHO];
+            double omega = c->prim[UPP];
+            double vrg   = c->prim[URR];
 
             double phip = c->piph;
             double phim = phip-c->dphi;
             double xp[3] = {r_jph[j]  ,phip,z_kph[k]  };
             double xm[3] = {r_jph[j-1],phim,z_kph[k-1]};
             double dV = get_dV( xp , xm );
+            if( Nz == 1 ) dV /= z_kph[0]-z_kph[-1];
 
             PsiR += rho*dV*cos(phi);
             PsiI += rho*dV*sin(phi);
@@ -116,12 +126,16 @@ void report( struct domain * theDomain ){
             if( Npl > 1 ){
                double fr,fp,fz,fp2;
                double rp = thePlanets[1].r;
+               double rS = thePlanets[0].r;
                double om = thePlanets[1].omega;
                double vr = thePlanets[1].vr;
                //double mp = thePlanets[1].M;
                planetaryForce( thePlanets   , r , phi , 0.0 , &fr , &fp2 , &fz , 1 );
                planetaryForce( thePlanets+1 , r , phi , 0.0 , &fr , &fp  , &fz , 1 );
 
+               double rhodot1,rhodot2;
+               planetarySink( thePlanets   , r , phi , 0.0 , &rhodot1 );
+               planetarySink( thePlanets+1 , r , phi , 0.0 , &rhodot2 );
                //double pp = thePlanets[1].phi;
                //double cosp = cos(phi);
                //double sinp = sin(phi);
@@ -134,6 +148,19 @@ void report( struct domain * theDomain ){
                Power  -= (rho-1.0)*( rp*om*fp + vr*fr )*dV;
                Torque2 -= (rho-1.0)*rp*fp2*dV;
                Fr -= (rho-1.0)*fr*dV;
+
+               double vp = r*omega;
+               double dphi1 = phi - thePlanets[0].phi;
+               double dphi2 = phi - thePlanets[1].phi;
+               double vp1 = vp*cos(dphi1) + vrg*sin(dphi1);
+               double vp2 = vp*cos(dphi2) + vrg*sin(dphi2);
+               double dj1 = rS*(vp1-rS*om);
+               double dj2 = rp*(vp2-rS*om);
+
+               Mdot1 += rho*rhodot1*dV;
+               Mdot2 += rho*rhodot2*dV;
+               Jdot1 += rho*rhodot1*dj1*dV;
+               Jdot2 += rho*rhodot2*dj2*dV;
 
 /*
                int n_cut;
@@ -174,6 +201,10 @@ void report( struct domain * theDomain ){
    MPI_Allreduce( MPI_IN_PLACE , &S_R     , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &S_0     , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
    MPI_Allreduce( MPI_IN_PLACE , &Mdot    , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Mdot1   , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Mdot2   , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Jdot1   , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
+   MPI_Allreduce( MPI_IN_PLACE , &Jdot2   , 1 , MPI_DOUBLE , MPI_SUM , grid_comm );
 
 //   MPI_Allreduce( MPI_IN_PLACE , T_cut  , 10 , MPI_DOUBLE , MPI_SUM , grid_comm );
 //   MPI_Allreduce( MPI_IN_PLACE , P_cut  , 10 , MPI_DOUBLE , MPI_SUM , grid_comm );
@@ -188,12 +219,17 @@ void report( struct domain * theDomain ){
    double aM = BrBp/PdV;
    double bM = PdV/B2;
 
+   double e0 = theDomain->theParList.Eccentricity;
+   double grate = theDomain->theParList.Drift_Rate;
+   double ecc = e0*exp(grate*t);
+
    if( rank==0 ){
       FILE * rFile = fopen("report.dat","a");
-      fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",
-                t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R,
-                L1_rho,L1_isen,L1_B,Br2,aM,bM);
-      //fprintf(rFile,"%e %e %e ",t,Torque,Power);
+      //fprintf(rFile,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",
+      //          t,Torque,Power,Fr,rho_min,rhoavg_min,PsiR,PsiI,Mass,Mdot,S_R,
+      //          L1_rho,L1_isen,L1_B,Br2,aM,bM);
+      //fprintf(rFile,"%e %e %e %e\n",t,Torque,Power,ecc);
+      fprintf(rFile,"%e %e %e %e %e %e %e %e %e\n",t,Torque,Torque2,q,Mdot1,Mdot2,Jdot1,Jdot2,Mass);
       //for( j=0 ; j<10 ; ++j ) fprintf(rFile,"%e %e ",T_cut[j],P_cut[j]);
       //fprintf(rFile,"\n");
       fclose(rFile);

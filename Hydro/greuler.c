@@ -6,7 +6,7 @@
 #define DEBUG 0
 
 //Global Functions
-double get_cs2( double );
+double get_cs2( double * );
 double get_dp( double , double );
 double get_dL( double * , double * , int );
 

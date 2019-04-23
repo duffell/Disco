@@ -11,7 +11,7 @@ void setICparams( struct domain * theDomain ){
    Mach = theDomain->theParList.Disk_Mach;
 }
 
-double get_cs2( double );
+double get_cs2( double * );
 
 void initial( double * prim , double * x ){
 
@@ -19,7 +19,7 @@ void initial( double * prim , double * x ){
    double z = x[2];
 
    double sint = z/sqrt(r*r+z*z);
-   double cs2 = get_cs2( r );
+   double cs2 = get_cs2( x );
 
    double rho = 1.0*exp(-sint*sint*Mach*Mach);
    double Pp  = rho*cs2/gam;

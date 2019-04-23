@@ -1,4 +1,4 @@
-enum{_HLL_,_HLLC_,_HLLD_};
+enum{_HLL_,_HLLC_,_HLLD_,_HLLC_DAMPCENTER_};
 
 #include "paul.h"
 
@@ -190,7 +190,7 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
       Ustr[q] = 0.0;
    }
 
-   if( riemann_solver == _HLL_ || riemann_solver == _HLLC_ ){
+   if( riemann_solver == _HLL_ || riemann_solver == _HLLC_ || riemann_solver == _HLLC_DAMPCENTER_ ){
       double Sl,Sr,Ss;
       double Bpack[5];
       vel( primL , primR , &Sl , &Sr , &Ss , n , x , Bpack );
@@ -204,7 +204,7 @@ void solve_riemann( double * primL , double * primR , double * consL , double * 
          prim2cons( primR , Ustr , x , 1.0 );
 
       }else{
-         if( riemann_solver == _HLL_ ){
+         if( riemann_solver == _HLL_ || (r < 0.1 && riemann_solver == _HLLC_DAMPCENTER_) ){
             double Fl[NUM_Q];
             double Fr[NUM_Q];
             double Ul[NUM_Q];

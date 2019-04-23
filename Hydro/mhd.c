@@ -3,7 +3,7 @@
 
 double get_om( double );
 double get_om1( double );
-double get_cs2( double );
+double get_cs2( double * );
 
 static double gamma_law = 0.0; 
 static double RHO_FLOOR = 0.0; 
@@ -195,7 +195,7 @@ void cons2prim( double * cons , double * prim , double * x , double dV ){
 
    if( Pp  < PRE_FLOOR*rho ) Pp = PRE_FLOOR*rho;
    if( isothermal ){
-      double cs2 = get_cs2( r );
+      double cs2 = get_cs2( x );
       Pp = cs2*rho/gamma_law;
    }
 

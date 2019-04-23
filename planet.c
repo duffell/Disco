@@ -1,5 +1,11 @@
 #include "paul.h"
 
+static double acc_rate;
+
+void set_generic_planet_params( struct domain * theDomain ){
+   acc_rate = theDomain->theParList.acc_rate;
+}
+
 double PHI_ORDER = 2.0;
 
 double get_dp( double , double );
@@ -7,6 +13,30 @@ double get_dp( double , double );
 double phigrav( double M , double r , double eps ){
    double n = PHI_ORDER;
    return( M/pow( pow(r,n) + pow(eps,n) , 1./n ) ) ;
+}
+
+double get_pot( struct planet * thePlanets , int Npl , double * x ){
+
+   double r   = x[0];
+   double phi = x[1];
+
+   double pot = 0.0;
+   int p;
+   for( p=0 ; p<Npl ; ++p ){
+      struct planet * pl = thePlanets+p;
+      double rp = pl->r;
+      double pp = pl->phi;
+      double cosp = cos(phi);
+      double sinp = sin(phi);
+      double dx = r*cosp-rp*cos(pp);
+      double dy = r*sinp-rp*sin(pp);
+      double script_r = sqrt(dx*dx+dy*dy);
+
+      pot += phigrav( pl->M , script_r , pl->eps );
+   }
+
+   return( pot );
+
 }
 
 double fgrav( double M , double r , double eps ){
@@ -77,6 +107,40 @@ void planetaryForce( struct planet * pl , double r , double phi , double z , dou
 
 }
 
+void planetaryPotential( struct planet * pl , double r , double phi , double z , double * Pot , int mode ){
+
+   z = 0.0; 
+
+   double rp = pl->r;
+   double pp = pl->phi;
+   double cosp = cos(phi);
+   double sinp = sin(phi);
+   double dx = r*cosp-rp*cos(pp);
+   double dy = r*sinp-rp*sin(pp);
+   double script_r = sqrt(dx*dx+dy*dy+z*z);
+
+   *Pot = phigrav( pl->M , script_r , pl->eps );
+
+}
+
+void planetarySink( struct planet * pl , double r , double phi , double z , double * rhodot ){
+   
+   z = 0.0;
+
+   double rp = pl->r;
+   double pp = pl->phi;
+   double cosp = cos(phi);
+   double sinp = sin(phi);
+   double dx = r*cosp-rp*cos(pp);
+   double dy = r*sinp-rp*sin(pp);
+   double script_r = sqrt(dx*dx+dy*dy+z*z);
+
+   double eps = 2.*pl->eps;
+
+   *rhodot = acc_rate*exp( - pow( script_r / eps , 4. ) );
+
+}
+
 void planet_src( struct planet * pl , double * prim , double * cons , double * xp , double * xm , double dVdt ){
 
    double rp = xp[0];
@@ -95,10 +159,29 @@ void planet_src( struct planet * pl , double * prim , double * cons , double * x
    double Fr,Fp,Fz;
    planetaryForce( pl , r , phi , z , &Fr , &Fp , &Fz , 0 );
 
+   double sinkRate;
+   planetarySink( pl , r , phi , z , &sinkRate );
+
    cons[SRR] += rho*Fr*dVdt;
    cons[SZZ] += rho*Fz*dVdt;
    cons[LLL] += rho*Fp*r*dVdt;
    cons[TAU] += rho*( Fr*vr + Fz*vz + Fp*vp )*dVdt;
+
+   double mdot = sinkRate*rho*dVdt;
+//   double dmM = mdot/cons[DDD];
+//   double dm = cons[DDD]*(1.-exp(-dmM));
+   double dm = mdot;
+
+   cons[DDD] -= dm;
+   cons[SRR] -= dm*vr;
+   cons[SZZ] -= dm*vz;
+   cons[LLL] -= dm*r*vp;
+   cons[TAU] -= dm*.5*(vr*vr+vp*vp+vz*vz);
+
+   int q;
+   for( q=NUM_C ; q<NUM_Q ; ++q ){
+      cons[q] -= dm*prim[q];
+   }
 
 }
 

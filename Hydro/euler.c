@@ -3,7 +3,7 @@
 
 double get_om( double );
 double get_om1( double );
-double get_cs2( double );
+double get_cs2( double * );
 
 static double gamma_law = 0.0; 
 static double RHO_FLOOR = 0.0; 
@@ -119,7 +119,7 @@ void cons2prim( double * cons , double * prim , double * x , double dV ){
 
    if( Pp  < PRE_FLOOR*rho ) Pp = PRE_FLOOR*rho;
    if( isothermal ){
-      double cs2 = get_cs2( r );
+      double cs2 = get_cs2( x );
       Pp = cs2*rho/gamma_law;
    }
 
@@ -132,6 +132,18 @@ void cons2prim( double * cons , double * prim , double * x , double dV ){
    int q;
    for( q=NUM_C ; q<NUM_Q ; ++q ){
       prim[q] = cons[q]/cons[DDD];
+   }
+
+   if( isnan( prim[RHO]*prim[PPP]*prim[URR]*prim[UPP]*prim[UZZ] ) ){
+      printf("NAN detected!\n");
+      printf("r = %e\n",r);
+      printf("prim = ");
+      for( q=0 ; q<NUM_Q ; ++q ) printf("%e ",prim[q]);
+      printf("\n");
+      printf("cons = ");
+      for( q=0 ; q<NUM_Q ; ++q ) printf("%e ",cons[q]);
+      printf("\n");
+      abort();
    }
 
 }
@@ -287,48 +299,29 @@ double mindt(double * prim , double w , double * xp , double * xm ){
    if( dt > dtp ) dt = dtp;
    if( dt > dtz ) dt = dtz;
 /*
-   double dL0 = get_dL(xp,xm,0);
-   double dL1 = get_dL(xp,xm,1);
-   double dL2 = get_dL(xp,xm,2);
-   double dx = dL0;
-   if( dx>dL1 ) dx = dL1;
-   if( dx>dL2 ) dx = dL2;
+   if( include_viscosity ){
+      double dL0 = get_dL(xp,xm,0);
+      double dL1 = get_dL(xp,xm,1);
+      double dL2 = get_dL(xp,xm,2);
+      double dx = dL0;
+      if( dx>dL1 ) dx = dL1;
+      if( dx>dL2 ) dx = dL2;
 
-   double nu = explicit_viscosity;
+      double nu = explicit_viscosity;
 
-   if( alpha_flag ){
-      double alpha = explicit_viscosity;
-      double c = sqrt( gamma_law*prim[PPP]/prim[RHO] );
-      double h = c*pow( r , 1.5 );
-      nu = alpha*c*h;
+      if( alpha_flag ){
+         double alpha = explicit_viscosity;
+         double c = sqrt( gamma_law*prim[PPP]/prim[RHO] );
+         double h = c*pow( r , 1.5 );
+         nu = alpha*c*h;
+      }
+
+      double dt_visc = .03*dx*dx/nu;
+      if( dt > dt_visc ) dt = dt_visc;
    }
-
-   double dt_visc = .03*dx*dx/nu;
-   if( dt > dt_visc ) dt = dt_visc;
 */
    return( dt );
 
 }
-/*
-double getReynolds( double * prim , double w , double * x , double dx ){
 
-   double r = x[0];
-   double nu = explicit_viscosity;
 
-   double vr = prim[URR];
-   double omega = prim[UPP];
-   double vp = omega*r-w;
-   double vz = prim[UZZ];
-
-   double rho = prim[RHO];
-   double Pp  = prim[PPP];
-   double cs = sqrt(gamma_law*Pp/rho);
-   
-   double v = sqrt(vr*vr + vp*vp + vz*vz);
-
-   double Re = (v+cs)*dx/nu;
-   
-   return(Re);
-
-}
-*/

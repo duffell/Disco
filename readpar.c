@@ -103,6 +103,7 @@ int read_par_file( struct domain * theDomain ){
          err += readvar( pfile , "Drift_Rate"            , VAR_DOUB , &(theList->Drift_Rate)      );
          err += readvar( pfile , "Drift_Exp"             , VAR_DOUB , &(theList->Drift_Exp)       );
          err += readvar( pfile , "Constrained_Transport" , VAR_INT  , &(theList->CT)              );
+         err += readvar( pfile , "Acc_Rate"              , VAR_DOUB , &(theList->acc_rate)        );
       }
       MPI_Barrier(MPI_COMM_WORLD);
    }

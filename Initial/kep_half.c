@@ -11,7 +11,7 @@ void setICparams( struct domain * theDomain ){
    Mach = theDomain->theParList.Disk_Mach;
 }
 
-double get_cs2( double );
+double get_cs2( double * );
 
 void initial( double * prim , double * x ){
 
@@ -24,7 +24,7 @@ void initial( double * prim , double * x ){
    double k = 0.5;
 
    double rho = 1.0/pow(r,k) ;//+ 1.*exp(-20.*sc_r2);
-   double cs2 = get_cs2( r );
+   double cs2 = get_cs2( x );
    double Pp = rho*cs2/gam;
    double omega02 = 0.5/pow(r,3.) ;//+.5-.5/pow(1.-r,3.);
    double omegaP2 = omega02*( (1.+k)/Mach/Mach );

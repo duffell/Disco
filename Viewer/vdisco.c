@@ -23,9 +23,9 @@
 
 /* ASCII code for the escape key. */
 #define ESCAPE 27
-
-#define VAL_FLOOR -1   //0.95//0 //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
-#define VAL_CEIL  1 //4.5e-3 //1.05//5.25e-21 //5.25e-9 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
+  
+#define VAL_FLOOR -2   //0.95//0 //-8e-3//-3e-2 //(-HUGE_VAL)  //.96
+#define VAL_CEIL  2   //4.5e-3 //1.05//5.25e-21 //5.25e-9 //8e-3//3e-2 //5.24e-5 //(HUGE_VAL)  //1.04
 #define FIXMAXMIN 1
 #define COLORMAX 7
 #define CAM_BACKUP  1.5
@@ -52,8 +52,8 @@ int draw_scale = 0;
 int reflect  = 0;
 int valq=0;
 int draw_border = 0;
-int logscale = 0;
-int floors=0;
+int logscale = 1;
+int floors=1;
 int help_screen=0;
 int print_vals=0;
 int fix_zero=0;
@@ -77,18 +77,21 @@ double max_1d = 1.0;
 
 void get_rgb( double , float * , float * , float * , int );
 
-double getval( double * thisZone , int q ){
+double getval( double * thisZone , int q , double r ){
    if( q!=-1 ) return( thisZone[q] );
    double rho = thisZone[0];
 //   double X   = thisZone[5];
    double P   = thisZone[1];
-   double Br = thisZone[5];
-   double Bp = thisZone[6];
-   double Bz = thisZone[7];
+   double vr = thisZone[2];
+   double omega = thisZone[3];
+//   double Br = thisZone[5];
+//   double Bp = thisZone[6];
+//   double Bz = thisZone[7];
 //   double gam = sqrt(1.+ur*ur+up*up);
 //   double e = (rho+4.*P)*gam*gam-P - rho*gam;
-   return( .5*(Br*Br+Bp*Bp+Bz*Bz) ); //fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
+ //  return( .5*(Br*Br+Bp*Bp+Bz*Bz) ); //fabs(P/pow(rho,5./3.)-1.) );// fabs(thisZone[1]/pow(thisZone[0],5./3.)-1.) );
 //   return( rho*P );
+   return( rho*r*r*omega*vr );
 }
 
 void getMaxMin(void){
@@ -99,8 +102,9 @@ void getMaxMin(void){
    double val;
    int i,j,k;
    for( j=0 ; j<Nr ; ++j ){
+      double r = .5*(r_jph[j] + r_jph[j-1]);
       for( i=0 ; i<Np[j] ; ++i ){
-         val = getval( theZones[j][i], q );
+         val = getval( theZones[j][i], q , r );
          if( logscale ) val = log(val)/log(10.);
          if( maxval < val ) maxval = val;
          if( minval > val ) minval = val;
@@ -112,7 +116,7 @@ void getMaxMin(void){
                 jk = k*Nr+j;
             else
                 jk = j*Nz+k;
-            val = getval( rzZones[jk], q );
+            val = getval( rzZones[jk], q , r );
             if( logscale ) val = log(val)/log(10.);
             if( maxval < val ) maxval = val;
             if( minval > val ) minval = val;
@@ -410,8 +414,8 @@ void DrawGLScene(){
                phim = phi-.55*dp;
             }
 
-            double val = (getval(theZones[j][i],q)-minval)/(maxval-minval);
-            if(logscale) val = (log(getval(theZones[j][i],q))/log(10.)-minval)/(maxval-minval);
+            double val = (getval(theZones[j][i],q,rc*rescale)-minval)/(maxval-minval);
+            if(logscale) val = (log(getval(theZones[j][i],q,rc*rescale))/log(10.)-minval)/(maxval-minval);
             if( val > 1.0 ) val = 1.0;
             if( val < 0.0 ) val = 0.0;
             //double u = getval( theZones[j][i] , 2 );
@@ -471,9 +475,9 @@ void DrawGLScene(){
                double zm = z_kph[k-1]/rescale;
 
                double phi = 0.0;//rzZones[jk][Nq];
-
-            double val = (getval(rzZones[jk],q)-minval)/(maxval-minval);
-            if(logscale) val = (log(getval(rzZones[jk],q))/log(10.)-minval)/(maxval-minval);
+               double rc = .5*(rp+rm)*rescale;
+            double val = (getval(rzZones[jk],q,rc)-minval)/(maxval-minval);
+            if(logscale) val = (log(getval(rzZones[jk],q,rc))/log(10.)-minval)/(maxval-minval);
             if( val > 1.0 ) val = 1.0;
             if( val < 0.0 ) val = 0.0;
             float rrr,ggg,bbb;

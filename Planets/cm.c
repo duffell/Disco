@@ -46,7 +46,7 @@ void initializePlanets( struct planet * thePlanets ){
 void movePlanets( struct planet * thePlanets , double t , double dt ){
    thePlanets[0].phi += thePlanets[0].omega*dt;
    thePlanets[1].phi += thePlanets[1].omega*dt;
-   double eps = smooth + exp(-t/30.);
+   double eps = smooth + 0.1*exp(-t);
    thePlanets[0].eps = eps;
    thePlanets[1].eps = eps;
 }
