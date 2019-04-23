@@ -155,7 +155,7 @@ void report( struct domain * theDomain ){
                double vp1 = vp*cos(dphi1) + vrg*sin(dphi1);
                double vp2 = vp*cos(dphi2) + vrg*sin(dphi2);
                double dj1 = rS*(vp1-rS*om);
-               double dj2 = rp*(vp2-rS*om);
+               double dj2 = rp*(vp2-rp*om);
 
                Mdot1 += rho*rhodot1*dV;
                Mdot2 += rho*rhodot2*dV;

@@ -133,7 +133,7 @@ void cons2prim( double * cons , double * prim , double * x , double dV ){
    for( q=NUM_C ; q<NUM_Q ; ++q ){
       prim[q] = cons[q]/cons[DDD];
    }
-
+/*
    if( isnan( prim[RHO]*prim[PPP]*prim[URR]*prim[UPP]*prim[UZZ] ) ){
       printf("NAN detected!\n");
       printf("r = %e\n",r);
@@ -145,7 +145,7 @@ void cons2prim( double * cons , double * prim , double * x , double dV ){
       printf("\n");
       abort();
    }
-
+*/
 }
 
 void flux( double * prim , double * flux , double * x , double * n ){

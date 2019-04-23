@@ -65,6 +65,7 @@ void setupGrid( struct domain * theDomain ){
          theDomain->r_jph[j] = Rmin*pow(Rmax/Rmin,x);
       }else{
          theDomain->r_jph[j] = R0*pow(Rmax/R0,x) + Rmin-R0 + (R0-Rmin)*x;
+//         theDomain->r_jph[j] = Rmax*( pow(Rmax/R0,x) - 1. )/( Rmax/R0 - 1. ) + Rmin;
       }
    }
    double dz = (Zmax-Zmin)/(double)Num_Z;
@@ -82,6 +83,7 @@ void setupGrid( struct domain * theDomain ){
          double dp = dr/rp*aspect;
          int Np = (int)(Pmax/dp);
          if( Np<4 ) Np=4;
+         if( Np == 6 ) Np = 5;
 //         if( Np<40 ) Np=40;
          theDomain->Np[jk] = Np;
       }

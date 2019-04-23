@@ -42,6 +42,8 @@ void initial( double * prim , double * x ){
 //   if( r*cos(x[1]) > 0.0 ) X = 1.0; 
    if( r>1. ) X = 1.0;
 
+//   if( r < .1 ) omega *= pow(r/.1,3.);
+
    prim[RHO] = rho; 
    prim[PPP] = Pp;
    prim[URR] = -1.5*nu/r;
