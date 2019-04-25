@@ -79,6 +79,8 @@ void freeDomain( struct domain * );
 
 void setPlanetParams( struct domain * );
 void initializePlanets( struct planet * );
+void setDiskParams( struct domain * );
+void movePlanets( struct planet * , double , double );
 int num_diagnostics( void );
 int get_num_rzFaces( int , int , int );
 
@@ -240,6 +242,7 @@ void restart( struct domain * theDomain ){
       int NpDat = 6;
       theDomain->thePlanets = (struct planet *) malloc( Npl*sizeof(struct planet) );
       initializePlanets( theDomain->thePlanets );
+      setDiskParams( theDomain );
 
       double PlanetData[Npl*NpDat];
       start2[0] = 0;
@@ -261,6 +264,7 @@ void restart( struct domain * theDomain ){
          pl->phi   = PlanetData[NpDat*p + 4];
          pl->eps   = PlanetData[NpDat*p + 5];
       }
+      movePlanets( theDomain->thePlanets , theDomain->t , 0.0 );
    }
    MPI_Barrier(theDomain->theComm);
    }
