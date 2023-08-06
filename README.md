@@ -53,7 +53,7 @@ should be changed to
 
 OUTPUT   = ascii
 
-RESTART  = none
+RESTART  = no_restart
 
 This should remove any dependency on HDF5.
 
